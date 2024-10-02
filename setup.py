@@ -112,6 +112,7 @@ class CustomBuildExt(build_ext):
             extra_compile_args = [
                 "-std=c++14",
                 "-flto",
+                "-fpermissive",
                 # "-ffp-model=precise", - clang only
                 "-ffp-contract=fast",
             ]
