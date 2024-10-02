@@ -185,18 +185,21 @@ def get_extensions():
 
     cibuildwheel = os.environ.get("CIBUILDWHEEL", None)
 
-    if local_machine == "aarch64":
+    if cibuildwheel:
+        pass
+
+    elif local_machine == "aarch64":
         # archspec doesn't detect the relevant features for arm
         # so we assume neon is available,
         # as it's unlikely for a device using the lib to not have it
         extensions.append(ASTCExtension("neon", configs["neon"]))
 
     elif local_host.family.name == "x86_64":
-        if cibuildwheel:
-            extensions.append(ASTCExtension("avx2", configs["avx2"]))
-            extensions.append(ASTCExtension("sse41", configs["sse41"]))
-            extensions.append(ASTCExtension("sse2", configs["sse2"]))
-        elif "avx2" in local_host.features:
+        # if cibuildwheel:
+        #     extensions.append(ASTCExtension("avx2", configs["avx2"]))
+        #     extensions.append(ASTCExtension("sse41", configs["sse41"]))
+        #     extensions.append(ASTCExtension("sse2", configs["sse2"]))
+        if "avx2" in local_host.features:
             extensions.append(ASTCExtension("avx2", configs["avx2"]))
         elif "sse4_1" in local_host.features:
             extensions.append(ASTCExtension("sse41", configs["sse41"]))
