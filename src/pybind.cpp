@@ -1,5 +1,6 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
+#include "structmember.h"
 #include "astcenc.h"
 
 /*
@@ -19,34 +20,34 @@ typedef struct ASTCConfig
 } ASTCConfigT;
 
 static PyMemberDef ASTCConfig_members[] = {
-    {"profile", Py_T_UINT, offsetof(ASTCConfigT, config.profile), 0, "the color profile"},
-    {"flags", Py_T_UINT, offsetof(ASTCConfigT, config.flags), 0, "the set of set flags."},
-    {"block_x", Py_T_UINT, offsetof(ASTCConfigT, config.block_x), 0, "the ASTC block size X dimension"},
-    {"block_y", Py_T_UINT, offsetof(ASTCConfigT, config.block_y), 0, "the ASTC block size Y dimension"},
-    {"block_z", Py_T_UINT, offsetof(ASTCConfigT, config.block_z), 0, "the ASTC block size Z dimension"},
-    {"cw_r_weight", Py_T_FLOAT, offsetof(ASTCConfigT, config.cw_r_weight), 0, "the red component weight scale for error weighting (-cw)"},
-    {"cw_g_weight", Py_T_FLOAT, offsetof(ASTCConfigT, config.cw_g_weight), 0, "the green component weight scale for error weighting (-cw)"},
-    {"cw_b_weight", Py_T_FLOAT, offsetof(ASTCConfigT, config.cw_b_weight), 0, "the blue component weight scale for error weighting (-cw)"},
-    {"cw_a_weight", Py_T_FLOAT, offsetof(ASTCConfigT, config.cw_a_weight), 0, "the alpha component weight scale for error weighting (-cw)"},
-    {"a_scale_radius", Py_T_UINT, offsetof(ASTCConfigT, config.a_scale_radius), 0, "the radius for any alpha-weight scaling (-a)"},
-    {"rgbm_m_scale", Py_T_FLOAT, offsetof(ASTCConfigT, config.rgbm_m_scale), 0, "the RGBM scale factor for the shared multiplier (-rgbm)"},
-    {"tune_partition_count_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_partition_count_limit), 0, "the maximum number of partitions searched (-partitioncountlimit)"},
-    {"tune_2partition_index_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_2partition_index_limit), 0, "the maximum number of partitions searched (-2partitionindexlimit)"},
-    {"tune_3partition_index_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_3partition_index_limit), 0, "the maximum number of partitions searched (-3partitionindexlimit)"},
-    {"tune_4partition_index_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_4partition_index_limit), 0, "the maximum number of partitions searched (-4partitionindexlimit)"},
-    {"tune_block_mode_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_block_mode_limit), 0, " the maximum centile for block modes searched (-blockmodelimit)"},
-    {"tune_refinement_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_refinement_limit), 0, "the maximum iterative refinements applied (-refinementlimit)"},
-    {"tune_candidate_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_candidate_limit), 0, "the number of trial candidates per mode search (-candidatelimit)"},
-    {"tune_2partitioning_candidate_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_2partitioning_candidate_limit), 0, "the number of trial partitionings per search (-2partitioncandidatelimit)"},
-    {"tune_3partitioning_candidate_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_3partitioning_candidate_limit), 0, "the number of trial partitionings per search (-3partitioncandidatelimit)"},
-    {"tune_4partitioning_candidate_limit", Py_T_UINT, offsetof(ASTCConfigT, config.tune_4partitioning_candidate_limit), 0, "the number of trial partitionings per search (-4partitioncandidatelimit)"},
-    {"tune_db_limit", Py_T_FLOAT, offsetof(ASTCConfigT, config.tune_db_limit), 0, "the dB threshold for stopping block search (-dblimit)"},
-    {"tune_mse_overshoot", Py_T_FLOAT, offsetof(ASTCConfigT, config.tune_mse_overshoot), 0, "the amount of MSE overshoot needed to early-out trials"},
-    {"tune_2partition_early_out_limit_factor", Py_T_FLOAT, offsetof(ASTCConfigT, config.tune_2partition_early_out_limit_factor), 0, "the threshold for skipping 3.1/4.1 trials (-2partitionlimitfactor)"},
-    {"tune_3partition_early_out_limit_factor", Py_T_FLOAT, offsetof(ASTCConfigT, config.tune_3partition_early_out_limit_factor), 0, "the threshold for skipping 4.1 trials (-3partitionlimitfactor)"},
-    {"tune_2plane_early_out_limit_correlation", Py_T_FLOAT, offsetof(ASTCConfigT, config.tune_2plane_early_out_limit_correlation), 0, "the threshold for skipping two weight planes (-2planelimitcorrelation)"},
-    {"tune_search_mode0_enable", Py_T_FLOAT, offsetof(ASTCConfigT, config.tune_search_mode0_enable), 0, "the config enable for the mode0 fast-path search"},
-    //{"progress_callback", Py_T_OBJECT, offsetof(ASTCConfigT, config.progress_callback), 0, "the progress callback, can be None"},
+    {"profile", T_UINT, offsetof(ASTCConfigT, config.profile), 0, "the color profile"},
+    {"flags", T_UINT, offsetof(ASTCConfigT, config.flags), 0, "the set of set flags."},
+    {"block_x", T_UINT, offsetof(ASTCConfigT, config.block_x), 0, "the ASTC block size X dimension"},
+    {"block_y", T_UINT, offsetof(ASTCConfigT, config.block_y), 0, "the ASTC block size Y dimension"},
+    {"block_z", T_UINT, offsetof(ASTCConfigT, config.block_z), 0, "the ASTC block size Z dimension"},
+    {"cw_r_weight", T_FLOAT, offsetof(ASTCConfigT, config.cw_r_weight), 0, "the red component weight scale for error weighting (-cw)"},
+    {"cw_g_weight", T_FLOAT, offsetof(ASTCConfigT, config.cw_g_weight), 0, "the green component weight scale for error weighting (-cw)"},
+    {"cw_b_weight", T_FLOAT, offsetof(ASTCConfigT, config.cw_b_weight), 0, "the blue component weight scale for error weighting (-cw)"},
+    {"cw_a_weight", T_FLOAT, offsetof(ASTCConfigT, config.cw_a_weight), 0, "the alpha component weight scale for error weighting (-cw)"},
+    {"a_scale_radius", T_UINT, offsetof(ASTCConfigT, config.a_scale_radius), 0, "the radius for any alpha-weight scaling (-a)"},
+    {"rgbm_m_scale", T_FLOAT, offsetof(ASTCConfigT, config.rgbm_m_scale), 0, "the RGBM scale factor for the shared multiplier (-rgbm)"},
+    {"tune_partition_count_limit", T_UINT, offsetof(ASTCConfigT, config.tune_partition_count_limit), 0, "the maximum number of partitions searched (-partitioncountlimit)"},
+    {"tune_2partition_index_limit", T_UINT, offsetof(ASTCConfigT, config.tune_2partition_index_limit), 0, "the maximum number of partitions searched (-2partitionindexlimit)"},
+    {"tune_3partition_index_limit", T_UINT, offsetof(ASTCConfigT, config.tune_3partition_index_limit), 0, "the maximum number of partitions searched (-3partitionindexlimit)"},
+    {"tune_4partition_index_limit", T_UINT, offsetof(ASTCConfigT, config.tune_4partition_index_limit), 0, "the maximum number of partitions searched (-4partitionindexlimit)"},
+    {"tune_block_mode_limit", T_UINT, offsetof(ASTCConfigT, config.tune_block_mode_limit), 0, " the maximum centile for block modes searched (-blockmodelimit)"},
+    {"tune_refinement_limit", T_UINT, offsetof(ASTCConfigT, config.tune_refinement_limit), 0, "the maximum iterative refinements applied (-refinementlimit)"},
+    {"tune_candidate_limit", T_UINT, offsetof(ASTCConfigT, config.tune_candidate_limit), 0, "the number of trial candidates per mode search (-candidatelimit)"},
+    {"tune_2partitioning_candidate_limit", T_UINT, offsetof(ASTCConfigT, config.tune_2partitioning_candidate_limit), 0, "the number of trial partitionings per search (-2partitioncandidatelimit)"},
+    {"tune_3partitioning_candidate_limit", T_UINT, offsetof(ASTCConfigT, config.tune_3partitioning_candidate_limit), 0, "the number of trial partitionings per search (-3partitioncandidatelimit)"},
+    {"tune_4partitioning_candidate_limit", T_UINT, offsetof(ASTCConfigT, config.tune_4partitioning_candidate_limit), 0, "the number of trial partitionings per search (-4partitioncandidatelimit)"},
+    {"tune_db_limit", T_FLOAT, offsetof(ASTCConfigT, config.tune_db_limit), 0, "the dB threshold for stopping block search (-dblimit)"},
+    {"tune_mse_overshoot", T_FLOAT, offsetof(ASTCConfigT, config.tune_mse_overshoot), 0, "the amount of MSE overshoot needed to early-out trials"},
+    {"tune_2partition_early_out_limit_factor", T_FLOAT, offsetof(ASTCConfigT, config.tune_2partition_early_out_limit_factor), 0, "the threshold for skipping 3.1/4.1 trials (-2partitionlimitfactor)"},
+    {"tune_3partition_early_out_limit_factor", T_FLOAT, offsetof(ASTCConfigT, config.tune_3partition_early_out_limit_factor), 0, "the threshold for skipping 4.1 trials (-3partitionlimitfactor)"},
+    {"tune_2plane_early_out_limit_correlation", T_FLOAT, offsetof(ASTCConfigT, config.tune_2plane_early_out_limit_correlation), 0, "the threshold for skipping two weight planes (-2planelimitcorrelation)"},
+    {"tune_search_mode0_enable", T_FLOAT, offsetof(ASTCConfigT, config.tune_search_mode0_enable), 0, "the config enable for the mode0 fast-path search"},
+    //{"progress_callback", T_OBJECT, offsetof(ASTCConfigT, config.progress_callback), 0, "the progress callback, can be None"},
     {NULL} /* Sentinel */
 };
 
@@ -132,11 +133,11 @@ typedef struct ASTCImage
 } ASTCImageT;
 
 static PyMemberDef ASTCImage_members[] = {
-    {"dim_x", Py_T_UINT, offsetof(ASTCImageT, image.dim_x), 0, "The X dimension of the image, in texels."},
-    {"dim_y", Py_T_UINT, offsetof(ASTCImageT, image.dim_y), 0, "The Y dimension of the image, in texels."},
-    {"dim_z", Py_T_UINT, offsetof(ASTCImageT, image.dim_z), 0, "The Z dimension of the image, in texels."},
-    {"data_type", Py_T_UINT, offsetof(ASTCImageT, image.data_type), 0, "The data type per component."},
-    {"data", Py_T_OBJECT_EX, offsetof(ASTCImageT, data), 0, "The array of 2D slices, of length @c dim_z."},
+    {"dim_x", T_UINT, offsetof(ASTCImageT, image.dim_x), 0, "The X dimension of the image, in texels."},
+    {"dim_y", T_UINT, offsetof(ASTCImageT, image.dim_y), 0, "The Y dimension of the image, in texels."},
+    {"dim_z", T_UINT, offsetof(ASTCImageT, image.dim_z), 0, "The Z dimension of the image, in texels."},
+    {"data_type", T_UINT, offsetof(ASTCImageT, image.data_type), 0, "The data type per component."},
+    {"data", T_OBJECT_EX, offsetof(ASTCImageT, data), 0, "The array of 2D slices, of length @c dim_z."},
     {NULL} /* Sentinel */
 };
 
@@ -216,10 +217,10 @@ typedef struct ASTCSwizzle
 } ASTCSwizzleT;
 
 static PyMemberDef ASTCSwizzle_members[] = {
-    {"r", Py_T_UINT, offsetof(ASTCSwizzleT, swizzle.r), 0, "the red component selector"},
-    {"g", Py_T_UINT, offsetof(ASTCSwizzleT, swizzle.g), 0, "the green component selector"},
-    {"b", Py_T_UINT, offsetof(ASTCSwizzleT, swizzle.b), 0, "the blue component selector"},
-    {"a", Py_T_UINT, offsetof(ASTCSwizzleT, swizzle.a), 0, "the alpha component selector"},
+    {"r", T_UINT, offsetof(ASTCSwizzleT, swizzle.r), 0, "the red component selector"},
+    {"g", T_UINT, offsetof(ASTCSwizzleT, swizzle.g), 0, "the green component selector"},
+    {"b", T_UINT, offsetof(ASTCSwizzleT, swizzle.b), 0, "the blue component selector"},
+    {"a", T_UINT, offsetof(ASTCSwizzleT, swizzle.a), 0, "the alpha component selector"},
     {NULL} /* Sentinel */
 };
 
@@ -291,8 +292,8 @@ typedef struct ASTCContext
 } ASTContextT;
 
 static PyMemberDef ASTCContext_members[] = {
-    {"config", Py_T_OBJECT_EX, offsetof(ASTCContext, config), Py_READONLY, "the configuration used by this context"},
-    {"threads", Py_T_UINT, offsetof(ASTCContext, threads), Py_READONLY, "the thread count used by this context"},
+    {"config", T_OBJECT_EX, offsetof(ASTCContext, config), READONLY, "the configuration used by this context"},
+    {"threads", T_UINT, offsetof(ASTCContext, threads), READONLY, "the thread count used by this context"},
     {NULL} /* Sentinel */
 };
 
@@ -463,7 +464,6 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
     Py_IncRef(py_image_data);
     Py_DecRef(py_image->data);
     py_image->data = py_image_data;
-    
 
     // cleanup
     image->data = nullptr;
