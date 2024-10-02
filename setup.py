@@ -67,12 +67,12 @@ configs = {
         ASTCENC_SSE=20,
         ASTCENC_POPCNT=1,
         msvc_flags=["/arch:SSE2"],
-        unix_flags=["-msse2", "-mno-sse4.1", "-Wno-unused-command-line-argument"],
+        unix_flags=["-msse2", "-mno-sse4.1"],
     ),
     "sse41": BuildConfig(
         ASTCENC_SSE=41,
         msvc_flags=["/arch:SSE4.1"],
-        unix_flags=["--msse4.1", "-mpopcnt", "-Wno-unused-command-line-argument"],
+        unix_flags=["--msse4.1", "-mpopcnt"],
     ),
     "avx2": BuildConfig(
         ASTCENC_SSE=41,
@@ -84,7 +84,6 @@ configs = {
             "-mavx2",
             "-mpopcnt",
             "-mf16c",
-            "-Wno-unused-command-line-argument",
         ],
     ),
 }
@@ -113,7 +112,7 @@ class CustomBuildExt(build_ext):
             extra_compile_args = [
                 "-std=c++14",
                 "-flto",
-                "-ffp-model=precise",
+                # "-ffp-model=precise", - clang only
                 "-ffp-contract=fast",
             ]
             extra_link_args = ["-flto"]
