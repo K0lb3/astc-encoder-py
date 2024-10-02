@@ -1,0 +1,4 @@
+include src/pybind.cpp
+include src/astc-encoder/LICENSE.txt
+include src/astc-encoder/Source/*.cpp
+include src/astc-encoder/Source/*.h
