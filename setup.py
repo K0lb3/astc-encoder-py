@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import os
 from dataclasses import dataclass, field
 from typing import List
 
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
+from wheel.bdist_wheel import bdist_wheel
 
 ASTC_ENCODER_SOURCES = [
     # cmake_core.cmake - static
@@ -161,6 +163,7 @@ class ASTCExtension(Extension):
                 ("ASTCENC_POPCNT", str(build_config.ASTCENC_POPCNT)),
                 ("ASTCENC_F16C", str(build_config.ASTCENC_F16C)),
             ],
+            py_limited_api=True,
         )
 
         if os.name != "nt":
@@ -206,35 +209,24 @@ def get_extensions():
     return extensions
 
 
+class bdist_wheel_abi3(bdist_wheel):
+    def get_tag(self):
+        python, abi, plat = super().get_tag()
+
+        if python.startswith("cp"):
+            # on CPython, our wheels are abi3 and compatible back to 3.6
+            return "cp37", "abi3", plat
+
+        return python, abi, plat
+
+
 setup(
     name="astc_encoder_py",
-    description="python wrapper for astc-encoder",
-    author="K0lb3",
-    version="0.1.0",
+    description="a python wrapper for astc-encoder",
     packages=["astc_encoder"],
     package_data={
         "astc_encoder": ["__init__.py", "__init__.pyi", "py.typed", "enum.py"]
     },
-    keywords=["astc", "texture", "python-c"],
-    classifiers=[
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-        "Intended Audience :: Developers",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Programming Language :: Python :: 3.13",
-        "Topic :: Multimedia :: Graphics",
-    ],
-    url="https://github.com/K0lb3/astc-encoder-py",
-    download_url="https://github.com/K0lb3/astc-encoder-py/tarball/master",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
     ext_modules=get_extensions(),
-    cmdclass={"build_ext": CustomBuildExt},
+    cmdclass={"build_ext": CustomBuildExt, "bdist_wheel": bdist_wheel_abi3},
 )
