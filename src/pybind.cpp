@@ -97,13 +97,12 @@ PyObject *ASTCConfig_repr(ASTCConfigT *self)
 }
 
 static PyType_Slot ASTCConfig_slots[] = {
-    {Py_tp_dealloc, ASTCConfig_dealloc},
-    {Py_tp_repr, ASTCConfig_repr},
-    {Py_tp_doc, "ASTC Configuration"},
-    //{Py_tp_methods, DBLogCursor_methods},
+    {Py_tp_dealloc, (void *)ASTCConfig_dealloc},
+    {Py_tp_repr, (void *)ASTCConfig_repr},
+    {Py_tp_doc, (void *)"ASTC Configuration"},
     {Py_tp_members, ASTCConfig_members},
-    {Py_tp_init, ASTCConfig_init},
-    {Py_tp_new, PyType_GenericNew},
+    {Py_tp_init, (void *)ASTCConfig_init},
+    {Py_tp_new, (void *)PyType_GenericNew},
     {0, NULL},
 };
 
@@ -183,12 +182,12 @@ static PyObject *ASTCImage_repr(ASTCImageT *self)
 }
 
 PyType_Slot ASTCImage_slots[] = {
-    {Py_tp_dealloc, ASTCImage_dealloc},
-    {Py_tp_doc, "ASTC Image"},
+    {Py_tp_dealloc, (void *)ASTCImage_dealloc},
+    {Py_tp_doc, (void *)"ASTC Image"},
     {Py_tp_members, ASTCImage_members},
-    {Py_tp_init, ASTCImage_init},
-    {Py_tp_new, PyType_GenericNew},
-    {Py_tp_repr, ASTCImage_repr},
+    {Py_tp_init, (void *)ASTCImage_init},
+    {Py_tp_new, (void *)PyType_GenericNew},
+    {Py_tp_repr, (void *)ASTCImage_repr},
     {0, NULL},
 };
 
@@ -257,12 +256,12 @@ static PyObject *ASTCSwizzle_repr(ASTCSwizzleT *self)
 }
 
 PyType_Slot ASTCSwizzle_slots[] = {
-    {Py_tp_dealloc, ASTCSwizzle_dealloc},
-    {Py_tp_doc, "ASTC Swizzle"},
+    {Py_tp_dealloc, (void *)ASTCSwizzle_dealloc},
+    {Py_tp_doc, (void *)"ASTC Swizzle"},
     {Py_tp_members, ASTCSwizzle_members},
-    {Py_tp_init, ASTCSwizzle_init},
-    {Py_tp_new, PyType_GenericNew},
-    {Py_tp_repr, ASTCSwizzle_repr},
+    {Py_tp_init, (void *)ASTCSwizzle_init},
+    {Py_tp_new, (void *)PyType_GenericNew},
+    {Py_tp_repr, (void *)ASTCSwizzle_repr},
     {0, NULL},
 };
 
@@ -339,7 +338,7 @@ static PyObject *ASTContext_repr(PyObject *self)
 
 PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObject *kwargs)
 {
-    static char *keywords[] = {"image", "swizzle", NULL};
+    static char *keywords[] = {(char *)"image", (char *)"swizzle", NULL};
     ASTCImageT *py_image = nullptr;
     ASTCSwizzleT *py_swizzle = nullptr;
 
@@ -402,7 +401,7 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
 
 PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObject *kwargs)
 {
-    static char *keywords[] = {"data", "image", "swizzle", NULL};
+    static char *keywords[] = {(char *)"data", (char *)"image", (char *)"swizzle", NULL};
 
     const uint8_t *comp_data;
     Py_ssize_t comp_len;
@@ -416,9 +415,7 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
 
     // prepare image
     astcenc_image *image = &py_image->image;
-    astcenc_config *config = &self->config->config;
 
-    Py_DecRef(py_image->data);
     Py_ssize_t image_len = image->dim_x * image->dim_y * image->dim_z * 4;
     if (image->data_type == ASTCENC_TYPE_F16)
     {
@@ -482,11 +479,12 @@ static PyMethodDef ASTCContext_methods[] = {
 };
 
 PyType_Slot ASTContext_slots[] = {
-    {Py_tp_dealloc, ASTContext_dealloc},
-    {Py_tp_doc, "ASTC Context"},
+    {Py_tp_dealloc, (void *)ASTContext_dealloc},
+    {Py_tp_doc, (void *)"ASTC Context"},
+    {Py_tp_repr, (void *)ASTContext_repr},
     {Py_tp_members, ASTCContext_members},
-    {Py_tp_init, ASTContext_init},
-    {Py_tp_new, PyType_GenericNew},
+    {Py_tp_init, (void *)ASTContext_init},
+    {Py_tp_new, (void *)PyType_GenericNew},
     {Py_tp_methods, ASTCContext_methods},
     {0, NULL},
 };
