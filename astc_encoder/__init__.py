@@ -14,7 +14,6 @@ from .enum import (
 
 local_host = host()
 local_machine = machine()
-encoder = None
 
 try:
     # pypi wheels won't have these for now
@@ -22,24 +21,20 @@ try:
         # archspec doesn't detect the relevant features for arm
         # so we assume neon is available,
         # as it's unlikely for a device using the lib to not have it
-        from . import _encoder_neon as encoder
+        from ._encoder_neon import *
     elif local_host.family.name == "x86_64":
         if "avx2" in local_host.features:
-            from . import _encoder_avx2 as encoder
+            from ._encoder_avx2 import *
         elif "sse4_1" in local_host.features:
-            from . import _encoder_sse41 as encoder
+            from ._encoder_sse41 import *
         elif "sse2" in local_host.features:
-            from . import _encoder_sse2 as encoder
+            from ._encoder_sse2 import *
 except ImportError:
     pass
 
-if encoder is None:
-    from . import _encoder_none as encoder
+if "ASTCConfig" not in locals():
+    from ._encoder_none import *
 
-ASTCConfig = encoder.ASTCConfig
-ASTCContext = encoder.ASTCContext
-ASTCImage = encoder.ASTCImage
-ASTCSwizzle = encoder.ASTCSwizzle
 
 __all__ = [
     "ASTCConfig",
