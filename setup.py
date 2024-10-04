@@ -128,10 +128,7 @@ class CustomBuildExt(build_ext):
                 # do some native optimizations for the current machine
                 # can't be used for generic builds
                 if "-arm" in self.plat_name or "-aarch64" in self.plat_name:
-                    if "macosx" in self.plat_name:
-                        native_arg = "-mcpu=apple-m1"
-                    else:
-                        native_arg = "-mcpu=native"
+                    native_arg = "-mcpu=native"
                 else:
                     native_arg = "-march=native"
                 extra_compile_args.append(native_arg)
