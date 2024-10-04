@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass, field
 from typing import List
 
+from archspec.cpu import host
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from wheel.bdist_wheel import bdist_wheel
@@ -98,6 +99,9 @@ class CustomBuildExt(build_ext):
         extra_compile_args: List[str] = []
         extra_link_args: List[str] = []
 
+        # check for cibuildwheel
+        cibuildwheel = os.environ.get("CIBUILDWHEEL", False)
+
         msvc: bool = False
         if self.compiler.compiler_type == "msvc":
             extra_compile_args = [
@@ -107,6 +111,9 @@ class CustomBuildExt(build_ext):
                 "/W4",
                 "/fp:precise",
             ]
+            # not in the astc-encoder CMakeLists.txt
+            # evem tho it should improve performance
+            extra_link_args = ["/LTCG:incremental"]
             msvc = True
         else:
             extra_compile_args = [
@@ -116,6 +123,43 @@ class CustomBuildExt(build_ext):
                 "-ffp-contract=fast",
             ]
             extra_link_args = ["-flto"]
+
+            if not cibuildwheel:
+                # do some native optimizations for the current machine
+                # can't be used for generic builds
+                if "-arm" in self.plat_name or "-aarch64" in self.plat_name:
+                    if "macosx" in self.plat_name:
+                        native_arg = "-mcpu=apple-m1"
+                    else:
+                        native_arg = "-mcpu=native"
+                else:
+                    native_arg = "-march=native"
+                extra_compile_args.append(native_arg)
+
+        local_host = host()
+
+        if self.plat_name.endswith(("amd64", "x86_64")):
+            if cibuildwheel:
+                self.extensions.extend(
+                    [
+                        ASTCExtension("sse2", configs["sse2"]),
+                        ASTCExtension("sse41", configs["sse41"]),
+                        ASTCExtension("avx2", configs["avx2"]),
+                    ]
+                )
+            elif "avx2" in local_host.features:
+                self.extensions.append(ASTCExtension("avx2", configs["avx2"]))
+            elif "sse4_1" in local_host.features:
+                self.extensions.append(ASTCExtension("sse41", configs["sse41"]))
+            elif "sse2" in local_host.features:
+                self.extensions.append(ASTCExtension("sse2", configs["sse2"]))
+        elif self.plat_name.endswith(("arm64", "aarch64")):
+            # TODO: somehow detect neon, sve128, sve256
+            # atm assume neon is always available
+            self.extensions.append(ASTCExtension("neon", configs["neon"]))
+        elif self.plat_name.endswith("armv7l"):
+            # TODO: detect neon
+            pass
 
         for ext in self.extensions:
             ext: ASTCExtension
@@ -134,6 +178,7 @@ class CustomBuildExt(build_ext):
 
 class ASTCExtension(Extension):
     build_config: BuildConfig
+    _needs_stub: bool = False
 
     def __init__(self, name: str, build_config: BuildConfig):
         module_name = f"_encoder_{name}"
@@ -172,45 +217,6 @@ class ASTCExtension(Extension):
         self.build_config = build_config
 
 
-def get_extensions():
-    from platform import machine
-
-    from archspec.cpu import host
-
-    local_host = host()
-    local_machine = machine()
-
-    extensions = []
-
-    cibuildwheel = os.environ.get("CIBUILDWHEEL", None)
-
-    if cibuildwheel:
-        pass
-
-    elif local_machine == "aarch64":
-        # archspec doesn't detect the relevant features for arm
-        # so we assume neon is available,
-        # as it's unlikely for a device using the lib to not have it
-        extensions.append(ASTCExtension("neon", configs["neon"]))
-
-    elif local_host.family.name == "x86_64":
-        # if cibuildwheel:
-        #     extensions.append(ASTCExtension("avx2", configs["avx2"]))
-        #     extensions.append(ASTCExtension("sse41", configs["sse41"]))
-        #     extensions.append(ASTCExtension("sse2", configs["sse2"]))
-        if "avx2" in local_host.features:
-            extensions.append(ASTCExtension("avx2", configs["avx2"]))
-        elif "sse4_1" in local_host.features:
-            extensions.append(ASTCExtension("sse41", configs["sse41"]))
-        elif "sse2" in local_host.features:
-            extensions.append(ASTCExtension("sse2", configs["sse2"]))
-
-    if not extensions or cibuildwheel:
-        extensions.append(ASTCExtension("none", BuildConfig()))
-
-    return extensions
-
-
 class bdist_wheel_abi3(bdist_wheel):
     def get_tag(self):
         python, abi, plat = super().get_tag()
@@ -229,6 +235,6 @@ setup(
     package_data={
         "astc_encoder": ["__init__.py", "__init__.pyi", "py.typed", "enum.py"]
     },
-    ext_modules=get_extensions(),
+    ext_modules=[ASTCExtension("none", BuildConfig())],
     cmdclass={"build_ext": CustomBuildExt, "bdist_wheel": bdist_wheel_abi3},
 )
