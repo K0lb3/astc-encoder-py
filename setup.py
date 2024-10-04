@@ -66,12 +66,12 @@ configs = {
     ),
     "sse2": BuildConfig(
         ASTCENC_SSE=20,
-        ASTCENC_POPCNT=1,
         msvc_flags=["/arch:SSE2"],
         unix_flags=["-msse2", "-mno-sse4.1"],
     ),
     "sse41": BuildConfig(
         ASTCENC_SSE=41,
+        ASTCENC_POPCNT=1,
         msvc_flags=["/arch:SSE4.1"],
         unix_flags=["--msse4.1", "-mpopcnt"],
     ),
