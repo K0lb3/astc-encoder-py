@@ -73,7 +73,7 @@ configs = {
         ASTCENC_SSE=41,
         ASTCENC_POPCNT=1,
         msvc_flags=["/arch:SSE4.1"],
-        unix_flags=["--msse4.1", "-mpopcnt"],
+        unix_flags=["-msse4.1", "-mpopcnt"],
     ),
     "avx2": BuildConfig(
         ASTCENC_SSE=41,
