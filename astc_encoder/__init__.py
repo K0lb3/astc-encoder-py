@@ -1,7 +1,5 @@
 __version__ = "0.1.1"
 
-from platform import machine
-
 from archspec.cpu import host
 
 from .enum import (
@@ -13,11 +11,10 @@ from .enum import (
 )
 
 local_host = host()
-local_machine = machine()
 
 try:
     # pypi wheels won't have these for now
-    if local_machine == "aarch64":
+    if local_host.family.name == "aarch64":
         # archspec doesn't detect the relevant features for arm
         # so we assume neon is available,
         # as it's unlikely for a device using the lib to not have it
