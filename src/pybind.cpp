@@ -3,6 +3,7 @@
 #include "structmember.h"
 #include "astcenc.h"
 #include <future>
+#include <thread>
 #include <vector>
 
 /*
@@ -312,6 +313,11 @@ static int ASTContext_init(ASTContextT *self, PyObject *args, PyObject *kwargs)
     {
         return -1;
     }
+
+    if (self->threads == 0){
+        self->threads = std::thread::hardware_concurrency();
+    }
+
     Py_IncRef((PyObject *)self->config);
     astcenc_error status = astcenc_context_alloc((const astcenc_config *)&self->config->config, self->threads, &self->context);
     if (status != ASTCENC_SUCCESS)
