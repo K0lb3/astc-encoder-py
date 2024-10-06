@@ -2,6 +2,8 @@
 #include <Python.h>
 #include "structmember.h"
 #include "astcenc.h"
+#include <future>
+#include <vector>
 
 /*
  *************************************************
@@ -363,7 +365,35 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
 
     // run the compressor
     astcenc_error status;
-    for (unsigned int thread_index = 0; thread_index < self->threads; thread_index++)
+    if (self->threads > 1)
+    {
+        status = ASTCENC_SUCCESS;
+
+        Py_BEGIN_ALLOW_THREADS;
+
+        std::vector<std::future<astcenc_error>> futures(self->threads);
+        for (int thread_index = 0; thread_index < self->threads; thread_index++)
+        {
+            futures[thread_index] = std::async(astcenc_compress_image, self->context,
+                                               image,
+                                               &py_swizzle->swizzle,
+                                               comp_data,
+                                               comp_len,
+                                               thread_index);
+        }
+
+        for (auto &future : futures)
+        {
+            astcenc_error future_status = future.get();
+            if (future_status != ASTCENC_SUCCESS)
+            {
+                status = future_status;
+            }
+        }
+
+        Py_END_ALLOW_THREADS;
+    }
+    else
     {
         status = astcenc_compress_image(
             self->context,
@@ -371,15 +401,17 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
             &py_swizzle->swizzle,
             comp_data,
             comp_len,
-            thread_index);
-        if (status != ASTCENC_SUCCESS)
-        {
-            delete[] comp_data;
-            image->data = nullptr;
-            PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
-            return NULL;
-        }
+            0);
     }
+
+    if (status != ASTCENC_SUCCESS)
+    {
+        delete[] comp_data;
+        image->data = nullptr;
+        PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
+        return NULL;
+    }
+
     status = astcenc_compress_reset(self->context);
     if (status != ASTCENC_SUCCESS)
     {
@@ -430,7 +462,36 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
 
     // run the decompressor
     astcenc_error status;
-    for (unsigned int thread_index = 0; thread_index < self->threads; thread_index++)
+
+    if (self->threads > 1)
+    {
+        status = ASTCENC_SUCCESS;
+
+        Py_BEGIN_ALLOW_THREADS;
+
+        std::vector<std::future<astcenc_error>> futures(self->threads);
+        for (int thread_index = 0; thread_index < self->threads; thread_index++)
+        {
+            futures[thread_index] = std::async(astcenc_decompress_image, self->context,
+                                               comp_data,
+                                               comp_len,
+                                               image,
+                                               &py_swizzle->swizzle,
+                                               thread_index);
+        }
+
+        for (auto &future : futures)
+        {
+            astcenc_error future_status = future.get();
+            if (future_status != ASTCENC_SUCCESS)
+            {
+                status = future_status;
+            }
+        }
+
+        Py_END_ALLOW_THREADS;
+    }
+    else
     {
         status = astcenc_decompress_image(
             self->context,
@@ -438,15 +499,17 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
             comp_len,
             image,
             &py_swizzle->swizzle,
-            thread_index);
-        if (status != ASTCENC_SUCCESS)
-        {
-            delete[] image_data;
-            image->data = nullptr;
-            PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
-            return NULL;
-        }
+            0);
     }
+
+    if (status != ASTCENC_SUCCESS)
+    {
+        delete[] image_data;
+        image->data = nullptr;
+        PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
+        return NULL;
+    }
+
     status = astcenc_decompress_reset(self->context);
     if (status != ASTCENC_SUCCESS)
     {
