@@ -365,11 +365,11 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
 
     // run the compressor
     astcenc_error status;
+
+    Py_BEGIN_ALLOW_THREADS;
     if (self->threads > 1)
     {
         status = ASTCENC_SUCCESS;
-
-        Py_BEGIN_ALLOW_THREADS;
 
         std::vector<std::future<astcenc_error>> futures(self->threads);
         for (int thread_index = 0; thread_index < self->threads; thread_index++)
@@ -390,8 +390,6 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
                 status = future_status;
             }
         }
-
-        Py_END_ALLOW_THREADS;
     }
     else
     {
@@ -403,6 +401,7 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
             comp_len,
             0);
     }
+    Py_END_ALLOW_THREADS;
 
     if (status != ASTCENC_SUCCESS)
     {
@@ -463,11 +462,10 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
     // run the decompressor
     astcenc_error status;
 
+    Py_BEGIN_ALLOW_THREADS;
     if (self->threads > 1)
     {
         status = ASTCENC_SUCCESS;
-
-        Py_BEGIN_ALLOW_THREADS;
 
         std::vector<std::future<astcenc_error>> futures(self->threads);
         for (int thread_index = 0; thread_index < self->threads; thread_index++)
@@ -488,8 +486,6 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
                 status = future_status;
             }
         }
-
-        Py_END_ALLOW_THREADS;
     }
     else
     {
@@ -501,6 +497,7 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
             &py_swizzle->swizzle,
             0);
     }
+    Py_END_ALLOW_THREADS;
 
     if (status != ASTCENC_SUCCESS)
     {
