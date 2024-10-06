@@ -25,9 +25,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     environment: release
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [windows-latest, macos-latest]
 
     steps:
       - uses: actions/checkout@v4
@@ -37,13 +37,51 @@ jobs:
       - name: Build wheels
         uses: joerick/cibuildwheel@v2.21.2
         
-
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
   
+  build_wheels_ubuntu_manilinux:
+    name: Build x86 manylinux wheels on ubuntu-latest
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build wheels
+        uses: joerick/cibuildwheel@v2.21.2
+        env:
+            CIBW_ENVIRONMENT_LINUX: CFLAGS="-D_mm256_cvtsi256_si32(x)=_mm256_extract_epi32((x),0)"
+            CIBW_SKIP: "*aarch64 *ppc64le *s390x *armv7l *-musllinux*"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./wheelhouse/*.whl
+
+  build_wheels_ubuntu_musllinux:
+    name: Build x86 musllinux wheels on ubuntu-latest
+    runs-on: ubuntu-latest
+    environment: release
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build wheels
+        uses: joerick/cibuildwheel@v2.21.2
+        env:
+            CIBW_SKIP: "*aarch64 *ppc64le *s390x *armv7l *-manylinux*"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./wheelhouse/*.whl
+
   build_wheels_qemu:
-    name: Build wheels on ubuntu-latest
+    name: Build wheels qemu on ubuntu-latest
     runs-on: ubuntu-latest
     environment: release
 
