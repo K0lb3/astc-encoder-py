@@ -309,12 +309,13 @@ static int ASTContext_init(ASTContextT *self, PyObject *args, PyObject *kwargs)
     self->config = nullptr;
     self->threads = 1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|I", (char **)kwlist, &self->config, &self->threads))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!|I", (char **)kwlist, ASTCConfig_Object, &self->config, &self->threads))
     {
         return -1;
     }
 
-    if (self->threads == 0){
+    if (self->threads == 0)
+    {
         self->threads = std::thread::hardware_concurrency();
     }
 
@@ -350,7 +351,7 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
     ASTCImageT *py_image = nullptr;
     ASTCSwizzleT *py_swizzle = nullptr;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", (char **)keywords, &py_image, &py_swizzle))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!O!", (char **)keywords, ASTCImage_Object, &py_image, ASTCSwizzle_Object, &py_swizzle))
     {
         return NULL;
     }
@@ -445,7 +446,7 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
     ASTCImageT *py_image = nullptr;
     ASTCSwizzleT *py_swizzle = nullptr;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y#OO", (char **)keywords, &comp_data, &comp_len, &py_image, &py_swizzle))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "y#O!O!", (char **)keywords, &comp_data, &comp_len, ASTCImage_Object, &py_image, ASTCSwizzle_Object, &py_swizzle))
     {
         return NULL;
     }
