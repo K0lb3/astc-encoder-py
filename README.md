@@ -9,8 +9,23 @@ It can compress images into astc textures and decompress astc textures into imag
 
 TODO, check the [pyi](./astc_encoder/__init__.pyi) for now.
 
-## example
+## examples
 
+### loading astc data as PIL.Image
+
+```py
+# import following once to register the codec
+import astc_encoder.pil_codec
+
+# pass the relevant data to the decoder via the decoder args as below
+profile: int = 1
+block_width: int = 4
+block_height: int = 4
+# the target mode should always be RGBA, even for RGB, as the decompression always returns RGBA
+Image.frombytes("RGBA", (512, 512), comp, "astc", (profile, block_width, block_height)).show()
+```
+
+### compressing and decompressing using astc_encoder
 ```py
 from PIL import Image
 
@@ -63,7 +78,7 @@ img = Image.frombytes("RGBA", img.size, image_dec.data)
 - [x] figuring out segfault for re-using ASTCImage
 - [x] creating ASTCSwizzle from strings instead of from ints
 - [ ] creating ASTCImage directly from PIL.Image
-- [ ] export ASTCImage directly to PIL.Image
+- [x] ~~export ASTCImage directly to PIL.Image~~ via PIL.ImageDecoder
 - [ ] SVE support for arm
 - [x] tests
 - [ ] docs page

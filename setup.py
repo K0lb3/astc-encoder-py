@@ -224,9 +224,7 @@ class bdist_wheel_abi3(bdist_wheel):
 setup(
     name="astc_encoder_py",
     packages=["astc_encoder"],
-    package_data={
-        "astc_encoder": ["__init__.py", "__init__.pyi", "py.typed", "enum.py"]
-    },
+    package_data={"astc_encoder": ["*.py", "*.pyi", "py.typed"]},
     ext_modules=[ASTCExtension("none", BuildConfig())],
     cmdclass={"build_ext": CustomBuildExt, "bdist_wheel": bdist_wheel_abi3},
 )
