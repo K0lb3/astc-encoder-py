@@ -80,4 +80,4 @@ img = Image.frombytes("RGBA", img.size, image_dec.data)
 - [x] ~~export ASTCImage directly to PIL.Image~~ via PIL.ImageDecoder
 - [ ] SVE support for arm
 - [x] tests
-- [ ] docs page
+- [x] docs page

@@ -16,8 +16,8 @@ class ASTCImage:
     3D image are passed in as an array of 2D slices.
     Each slice has identical size and color format.
 
-    Members
-    -------
+    Attributes
+    ----------
     dim_x : int
         The X dimension of the image, in texels.
     dim_y : int
@@ -54,35 +54,35 @@ class ASTCConfig:
     config applies to the component that exists after any compression data swizzle is applied.
 
     Legal block sizes are:
-        2d:
-            4x4
-            5x4
-            5x5
-            6x5
-            6x6
-            8x5
-            8x6
-            8x8
-            10x5
-            10x6
-            10x8
-            10x10
-            12x10
-            12x12
-        3d:
-            3x3x3
-            4x3x3
-            4x4x3
-            4x4x4
-            5x4x4
-            5x5x4
-            5x5x5
-            6x5x5
-            6x6x5
-            6x6x6
+    - 2d
+        - 4x4
+        - 5x4
+        - 5x5
+        - 6x5
+        - 6x6
+        - 8x5
+        - 8x6
+        - 8x8
+        - 10x5
+        - 10x6
+        - 10x8
+        - 10x10
+        - 12x10
+        - 12x12
+    - 3d
+        - 3x3x3
+        - 4x3x3
+        - 4x4x3
+        - 4x4x4
+        - 5x4x4
+        - 5x5x4
+        - 5x5x5
+        - 6x5x5
+        - 6x6x5
+        - 6x6x6
 
-    Members
-    -------
+    Attributes
+    ----------
     profile : ASTCProfile
         The color profile.
     flags : int
@@ -204,7 +204,7 @@ class ASTCConfig:
 class ASTCSwizzle:
     """A texel component swizzle.
 
-    Members
+    Attributes
     ----------
     r : ASTCSwizzleComponentSelector
         The red component selector.
@@ -234,13 +234,13 @@ class ASTCSwizzle:
         Create a swizzle from a string.
 
         The string must be 4 characters long, with each character being one of:
-            r/R: Red component.
-            g/G: Green component.
-            b/B: Blue component.
-            a/A: Alpha component.
-            0: always 0
-            1: always 1
-            z/Z: Reconstructed normal vector Z component.
+          - r/R: Red component.
+          - g/G: Green component.
+          - b/B: Blue component.
+          - a/A: Alpha component.
+          - 0: always 0
+          - 1: always 1
+          - z/Z: Reconstructed normal vector Z component.
         """
         ...
 
@@ -249,8 +249,8 @@ class ASTCContext:
     threads: int
 
     def __init__(self, config: ASTCConfig, threads: int = 1) -> None: ...
-    def compress(self, image: ASTCImage, swizzle: str) -> bytes: ...
-    def decompress(self, data: bytes, image: ASTCImage, swizzle: str) -> ASTCImage: ...
+    def compress(self, image: ASTCImage, swizzle: ASTCSwizzle) -> bytes: ...
+    def decompress(self, data: bytes, image: ASTCImage, swizzle: ASTCSwizzle) -> ASTCImage: ...
 
 class ASTCError(Exception):
     pass

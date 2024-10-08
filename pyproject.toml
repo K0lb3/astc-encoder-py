@@ -56,3 +56,14 @@ build = "cp37-win_amd64 cp37-win32 cp39-win_arm64 pp3*"
 [project.optional-dependencies]
 tests = ["pytest >= 8.3.3", "pillow >=10.4.0", "imagehash >=4.3.1"]
 
+[tool.ruff]
+include = ["pyproject.toml", "astc_encoder/*.py", "astc_encoder/*.pyi", "tests/*.py"]
+
+[tool.ruff.lint]
+select = ["D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

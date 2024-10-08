@@ -1,4 +1,10 @@
 test.py
+/docs
+/wip
+*.exe
+
+# Ruff
+.ruff_cache/
 
 # Editors
 .vscode/

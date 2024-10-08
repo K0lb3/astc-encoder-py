@@ -1,4 +1,10 @@
+"""PIL codec for ASTC images.
+
+Importing this module provides an ASTC codec for PIL for encoding and decoding ASTC images.
+"""
+
 import struct
+from typing import Any, List
 
 from PIL import Image, ImageFile
 
@@ -13,18 +19,21 @@ from astc_encoder import (
 )
 
 
-class ASTCEncoder(ImageFile.PyEncoder):
+class ASTCEncoder(ImageFile.PyEncoder):  # noqa: D101
     _pushes_fd: bool = True
     context: ASTCContext
 
-    def init(
+    def init(  # noqa: D102
         self,
-        profile: int,
-        quality: float,
-        block_width: int,
-        block_height: int,
-        block_depth: int = 1,
+        args: List[Any],
     ):
+        assert len(args) in (4, 5), "Invalid number of arguments"
+        profile: int = args[0]
+        quality: float = args[1]
+        block_width: int = args[2]
+        block_height: int = args[3]
+        block_depth: int = args[4] if len(args) > 4 else 1
+
         assert block_depth == 1, "Cannot handle 3D textures"
         profile = ASTCProfile(profile)
         config = ASTCConfig(
@@ -36,19 +45,20 @@ class ASTCEncoder(ImageFile.PyEncoder):
         )
         self.context = ASTCContext(config)
 
-    def encode(self, bufsize: int) -> tuple[int, int, bytes]:
-        assert self.im is not None, "No image set"
+    def encode(self, bufsize: int) -> tuple[int, int, bytes]:  # noqa: D102
+        assert self.im is not None, "No image set"  # type: ignore
 
-        if self.mode == "RGBA":
+        mode: str = self.mode
+        if mode == "RGBA":
             swizzle = ASTCSwizzle.from_str("rgba")
-        elif self.mode == "RGB":
+        elif mode == "RGB":
             swizzle = ASTCSwizzle.from_str("rgb1")
         else:
-            raise ValueError(f"Unsupported mode: {self.mode}")
+            raise ValueError(f"Unsupported mode: {mode}")
 
         rgba_struct = struct.Struct("4B")
         data = b"".join(
-            rgba_struct.pack(*self.im.getpixel((x, y)))
+            rgba_struct.pack(*self.im.getpixel((x, y)))  # type: ignore
             for y in range(self.state.ysize)
             for x in range(self.state.xsize)
         )
@@ -65,11 +75,11 @@ class ASTCEncoder(ImageFile.PyEncoder):
 Image.register_encoder("astc", ASTCEncoder)
 
 
-class ASTCDecoder(ImageFile.PyDecoder):
+class ASTCDecoder(ImageFile.PyDecoder):  # noqa: D101
     _pull_fd: bool = True
     context: ASTCContext
 
-    def init(self, args):
+    def init(self, args: List[Any]):  # noqa: D102
         assert len(args) in (3, 4), "Invalid number of arguments"
         profile: int = ASTCProfile(args[0])
         block_width: int = args[1]
@@ -86,7 +96,7 @@ class ASTCDecoder(ImageFile.PyDecoder):
         )
         self.context = ASTCContext(config)
 
-    def decode(self, buffer: bytes | Image.SupportsArrayInterface) -> tuple[int, int]:
+    def decode(self, buffer: bytes | Image.SupportsArrayInterface) -> tuple[int, int]:  # noqa: D102
         assert self.state.xoff == 0 and self.state.yoff == 0, "Cannot handle offsets"
 
         config = self.context.config
@@ -101,7 +111,7 @@ class ASTCDecoder(ImageFile.PyDecoder):
         block_count_y = (self.state.ysize + config.block_y - 1) // config.block_y
         expected_size = block_count_x * block_count_y * 16
 
-        if len(buffer) != expected_size:
+        if len(buffer) != expected_size and self.fd is not None:
             buffer = self.fd.read(expected_size)
 
         if len(buffer) != expected_size:
@@ -112,12 +122,14 @@ class ASTCDecoder(ImageFile.PyDecoder):
             self.state.xsize,
             self.state.ysize,
         )
-        if self.mode == "RGBA":
+
+        mode: str = self.mode
+        if mode == "RGBA":
             swizzle = ASTCSwizzle.from_str("rgba")
-        elif self.mode == "RGB":
+        elif mode == "RGB":
             swizzle = ASTCSwizzle.from_str("rgb1")
         else:
-            raise ValueError(f"Unsupported mode: {self.mode}")
+            raise ValueError(f"Unsupported mode: {mode}")
 
         self.context.decompress(buffer, astc_img, swizzle)
 
