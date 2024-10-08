@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import Optional, Union
 
 from .enum import (
@@ -227,6 +228,21 @@ class ASTCSwizzle:
         b: ASTCSwizzleComponentSelector = ASTCSwizzleComponentSelector.B,
         a: ASTCSwizzleComponentSelector = ASTCSwizzleComponentSelector.A,
     ) -> None: ...
+    @classmethod
+    def from_str(cls, swizzle: str) -> ASTCSwizzle:
+        """
+        Create a swizzle from a string.
+
+        The string must be 4 characters long, with each character being one of:
+            r/R: Red component.
+            g/G: Green component.
+            b/B: Blue component.
+            a/A: Alpha component.
+            0: always 0
+            1: always 1
+            z/Z: Reconstructed normal vector Z component.
+        """
+        ...
 
 class ASTCContext:
     config: ASTCConfig

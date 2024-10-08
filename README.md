@@ -42,7 +42,7 @@ img = Image.new("RGBA", (512, 512), (255, 0, 0, 255))
 image = ASTCImage(ASTCType.U8, *img.size, data=img.tobytes())
 
 # create a RGBA swizzle
-swizzle = ASTCSwizzle()
+swizzle = ASTCSwizzle.from_str("RGBA")
 
 # compress the image with the given context
 comp = context.compress(image, swizzle)
@@ -61,7 +61,7 @@ img = Image.frombytes("RGBA", img.size, image_dec.data)
 
 ## TODO
 - [x] figuring out segfault for re-using ASTCImage
-- [ ] creating ASTCSwizzle from strings instead of from ints
+- [x] creating ASTCSwizzle from strings instead of from ints
 - [ ] creating ASTCImage directly from PIL.Image
 - [ ] export ASTCImage directly to PIL.Image
 - [ ] SVE support for arm

@@ -5,6 +5,7 @@
 #include <future>
 #include <thread>
 #include <vector>
+#include <cctype>
 
 PyObject *ASTCError;
 
@@ -255,10 +256,87 @@ static void ASTCSwizzle_dealloc(ASTCSwizzleT *self)
     PyObject_Del(self);
 }
 
+typedef struct StrSwizzle
+{
+    char chr;
+    astcenc_swz value;
+} StrSwizzle;
+
+static StrSwizzle str_swizzle_map[] = {
+    {'R', ASTCENC_SWZ_R},
+    {'G', ASTCENC_SWZ_G},
+    {'B', ASTCENC_SWZ_B},
+    {'A', ASTCENC_SWZ_A},
+    {'0', ASTCENC_SWZ_0},
+    {'1', ASTCENC_SWZ_1},
+    {'Z', ASTCENC_SWZ_Z},
+};
+
+static char swizzle_to_char(astcenc_swz swizzle)
+{
+    for (size_t i = 0; i < sizeof(str_swizzle_map) / sizeof(StrSwizzle); i++)
+    {
+        if (str_swizzle_map[i].value == swizzle)
+        {
+            return str_swizzle_map[i].chr;
+        }
+    }
+    return '\0';
+}
+
+static bool char_to_swizzle(char chr, astcenc_swz *swizzle)
+{
+    for (size_t i = 0; i < sizeof(str_swizzle_map) / sizeof(StrSwizzle); i++)
+    {
+        if (str_swizzle_map[i].chr == chr)
+        {
+            *swizzle = str_swizzle_map[i].value;
+            return true;
+        }
+    }
+    return false;
+}
+
 static PyObject *ASTCSwizzle_repr(ASTCSwizzleT *self)
 {
-    return PyUnicode_FromFormat("ASTCSwizzle<(%d, %d, %d, %d)>", self->swizzle.r, self->swizzle.g, self->swizzle.b, self->swizzle.a);
+    return PyUnicode_FromFormat("ASTCSwizzle<%c%c%c%c>", swizzle_to_char(self->swizzle.r), swizzle_to_char(self->swizzle.g), swizzle_to_char(self->swizzle.b), swizzle_to_char(self->swizzle.a));
 }
+
+static PyObject *ASTCSwizzle_from_str(PyObject *cls, PyObject *args)
+{
+    char *str;
+    if (!PyArg_ParseTuple(args, "s", &str))
+    {
+        return NULL;
+    }
+
+    astcenc_swizzle swizzle;
+    if (strlen(str) != 4)
+    {
+        PyErr_SetString(ASTCError, "Swizzle string must be exactly 4 characters long.");
+        return NULL;
+    }
+
+    str[0] = std::toupper(static_cast<unsigned char>(str[0]));
+    str[1] = std::toupper(static_cast<unsigned char>(str[1]));
+    str[2] = std::toupper(static_cast<unsigned char>(str[2]));
+    str[3] = std::toupper(static_cast<unsigned char>(str[3]));
+
+    if (!char_to_swizzle(str[0], &swizzle.r) || !char_to_swizzle(str[1], &swizzle.g) || !char_to_swizzle(str[2], &swizzle.b) || !char_to_swizzle(str[3], &swizzle.a))
+    {
+        PyErr_SetString(ASTCError, "Invalid swizzle character.");
+        return NULL;
+    }
+
+    ASTCSwizzleT *swizzle_obj = PyObject_New(ASTCSwizzleT, (PyTypeObject *)cls);
+    swizzle_obj->swizzle = swizzle;
+    return (PyObject *)swizzle_obj;
+}
+
+static PyMethodDef ASTCSwizzle_methods[] = {
+    {"from_str", (PyCFunction)ASTCSwizzle_from_str, METH_VARARGS | METH_CLASS,
+     "Create a new ASTCSwizzle object from a string."},
+    {NULL, NULL, 0, NULL}};
 
 PyType_Slot ASTCSwizzle_slots[] = {
     {Py_tp_dealloc, (void *)ASTCSwizzle_dealloc},
@@ -267,6 +345,7 @@ PyType_Slot ASTCSwizzle_slots[] = {
     {Py_tp_init, (void *)ASTCSwizzle_init},
     {Py_tp_new, (void *)PyType_GenericNew},
     {Py_tp_repr, (void *)ASTCSwizzle_repr},
+    {Py_tp_methods, (void *)ASTCSwizzle_methods},
     {0, NULL},
 };
 

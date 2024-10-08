@@ -73,6 +73,26 @@ def test_invalid_block_sizes():
             pass
 
 
+def test_swizzle():
+    # check default values
+    swizzle = astc_encoder.ASTCSwizzle()
+    assert swizzle.r == astc_encoder.ASTCSwizzleComponentSelector.R
+    assert swizzle.g == astc_encoder.ASTCSwizzleComponentSelector.G
+    assert swizzle.b == astc_encoder.ASTCSwizzleComponentSelector.B
+    assert swizzle.a == astc_encoder.ASTCSwizzleComponentSelector.A
+    # check from_string
+    swizzle = astc_encoder.ASTCSwizzle.from_str("10ZB")
+    assert swizzle.r == astc_encoder.ASTCSwizzleComponentSelector.ONE
+    assert swizzle.g == astc_encoder.ASTCSwizzleComponentSelector.ZERO
+    assert swizzle.b == astc_encoder.ASTCSwizzleComponentSelector.Z
+    assert swizzle.a == astc_encoder.ASTCSwizzleComponentSelector.B
+    swizzle = astc_encoder.ASTCSwizzle.from_str("razg")
+    assert swizzle.r == astc_encoder.ASTCSwizzleComponentSelector.R
+    assert swizzle.g == astc_encoder.ASTCSwizzleComponentSelector.A
+    assert swizzle.b == astc_encoder.ASTCSwizzleComponentSelector.Z
+    assert swizzle.a == astc_encoder.ASTCSwizzleComponentSelector.G
+
+
 if __name__ == "__main__":
     for name in dir():
         if name.startswith("test_"):
