@@ -43,7 +43,7 @@ jobs:
         with:
           path: ./wheelhouse/*.whl
   
-  build_wheels_ubuntu_manilinux:
+  build_wheels_ubuntu_manylinux:
     name: Build x86 manylinux wheels on ubuntu-latest
     runs-on: ubuntu-latest
     environment: release
@@ -112,7 +112,7 @@ jobs:
 
   upload_pypi:
     name: Publish to PyPI
-    needs: [build_wheels, build_wheels_qemu, build_sdist]
+    needs: [build_wheels, build_wheels_qemu, build_wheels_ubuntu_manylinux, build_wheels_ubuntu_musllinux, build_sdist]
     runs-on: ubuntu-latest
     environment: release
     permissions:
