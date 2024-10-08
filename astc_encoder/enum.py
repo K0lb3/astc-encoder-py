@@ -105,3 +105,12 @@ class ASTCSwizzleComponentSelector(IntEnum):
     ZERO = 4
     ONE = 5
     Z = 6
+
+
+__all__ = (
+    "ASTCProfile",
+    "ASTCQualityPreset",
+    "ASTCConfigFlags",
+    "ASTCType",
+    "ASTCSwizzleComponentSelector",
+)

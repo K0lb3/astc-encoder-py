@@ -238,3 +238,11 @@ class ASTCContext:
 
 class ASTCError(Exception):
     pass
+
+__all__ = (
+    "ASTCConfig",
+    "ASTCContext",
+    "ASTCImage",
+    "ASTCSwizzle",
+    "ASTCError",
+)
