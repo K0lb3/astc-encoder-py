@@ -34,8 +34,8 @@ dependencies = ["archspec >= 0.2"]
 dynamic = ["version"]
 
 [project.urls]
-"Homepage" = "https://github.com/K0lb3/UnityPy"
-"Bug Tracker" = "https://github.com/K0lb3/UnityPy/issues"
+"Homepage" = "https://github.com/K0lb3/astc-encoder-py"
+"Bug Tracker" = "https://github.com/K0lb3/astc-encoder-py/issues"
 
 [tool.setuptools.dynamic]
 version = { attr = "astc_encoder.__version__" }
@@ -51,3 +51,8 @@ build = "cp37-macosx_x86_64 cp38-macosx_arm64 pp3*"
 [tool.cibuildwheel.windows]
 archs = ["AMD64", "x86", "ARM64"]
 build = "cp37-win_amd64 cp37-win32 cp39-win_arm64 pp3*"
+
+# tests
+[project.optional-dependencies]
+tests = ["pytest >= 8.3.3", "pillow >=10.4.0", "imagehash >=4.3.1"]
+

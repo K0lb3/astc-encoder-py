@@ -1,4 +1,4 @@
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 from archspec.cpu import host
 
@@ -43,4 +43,5 @@ __all__ = [
     "ASTCQualityPreset",
     "ASTCSwizzleComponentSelector",
     "ASTCType",
+    "ASTCError",
 ]

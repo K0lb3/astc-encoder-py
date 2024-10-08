@@ -31,6 +31,7 @@ class ASTCImage:
     dim_y: int
     dim_z: int
     data_type: ASTCType
+    data: Optional[bytes]
 
     def __init__(
         self,
@@ -50,6 +51,34 @@ class ASTCConfig:
 
     Note for any settings which are associated with a specific color component, the value in the
     config applies to the component that exists after any compression data swizzle is applied.
+
+    Legal block sizes are:
+        2d:
+            4x4
+            5x4
+            5x5
+            6x5
+            6x6
+            8x5
+            8x6
+            8x8
+            10x5
+            10x6
+            10x8
+            10x10
+            12x10
+            12x12
+        3d:
+            3x3x3
+            4x3x3
+            4x4x3
+            4x4x4
+            5x4x4
+            5x5x4
+            5x5x5
+            6x5x5
+            6x6x5
+            6x6x6
 
     Members
     -------
@@ -206,3 +235,6 @@ class ASTCContext:
     def __init__(self, config: ASTCConfig, threads: int = 1) -> None: ...
     def compress(self, image: ASTCImage, swizzle: str) -> bytes: ...
     def decompress(self, data: bytes, image: ASTCImage, swizzle: str) -> ASTCImage: ...
+
+class ASTCError(Exception):
+    pass

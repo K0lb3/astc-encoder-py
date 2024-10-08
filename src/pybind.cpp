@@ -6,6 +6,8 @@
 #include <thread>
 #include <vector>
 
+PyObject *ASTCError;
+
 /*
  *************************************************
  *
@@ -82,7 +84,7 @@ static int ASTCConfig_init(ASTCConfigT *self, PyObject *args, PyObject *kwargs)
 
     if (status != ASTCENC_SUCCESS)
     {
-        PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
+        PyErr_SetString(ASTCError, astcenc_get_error_string(status));
         return -1;
     }
 
@@ -323,7 +325,7 @@ static int ASTContext_init(ASTContextT *self, PyObject *args, PyObject *kwargs)
     astcenc_error status = astcenc_context_alloc((const astcenc_config *)&self->config->config, self->threads, &self->context);
     if (status != ASTCENC_SUCCESS)
     {
-        PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
+        PyErr_SetString(ASTCError, astcenc_get_error_string(status));
         return -1;
     }
 
@@ -414,7 +416,7 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
     {
         delete[] comp_data;
         image->data = nullptr;
-        PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
+        PyErr_SetString(ASTCError, astcenc_get_error_string(status));
         return NULL;
     }
 
@@ -423,7 +425,7 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
     {
         delete[] comp_data;
         image->data = nullptr;
-        PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
+        PyErr_SetString(ASTCError, astcenc_get_error_string(status));
         return NULL;
     }
 
@@ -510,7 +512,7 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
     {
         delete[] image_data;
         image->data = nullptr;
-        PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
+        PyErr_SetString(ASTCError, astcenc_get_error_string(status));
         return NULL;
     }
 
@@ -519,7 +521,7 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
     {
         delete[] image_data;
         image->data = nullptr;
-        PyErr_SetString(PyExc_RuntimeError, astcenc_get_error_string(status));
+        PyErr_SetString(ASTCError, astcenc_get_error_string(status));
         return NULL;
     }
 
@@ -625,6 +627,12 @@ PyMODINIT_FUNC INIT_FUNC_NAME(void)
 
     ASTCSwizzle_Object = PyType_FromSpec(&ASTCSwizzle_Spec);
     if (add_object(m, "ASTCSwizzle", ASTCSwizzle_Object) < 0)
+    {
+        return NULL;
+    }
+
+    ASTCError = PyErr_NewException("astc_encoder.ASTCError", nullptr, nullptr);
+    if (add_object(m, "ASTCError", ASTCError) < 0)
     {
         return NULL;
     }

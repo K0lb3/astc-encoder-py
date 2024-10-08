@@ -61,9 +61,9 @@ img = Image.frombytes("RGBA", img.size, image_dec.data)
 
 ## TODO
 - [x] figuring out segfault for re-using ASTCImage
-- [] creating ASTCSwizzle from strings instead of from ints
-- [] creating ASTCImage directly from PIL.Image
-- [] export ASTCImage directly to PIL.Image
-- [] SVE support for arm
-- [] tests
-- [] docs page
+- [ ] creating ASTCSwizzle from strings instead of from ints
+- [ ] creating ASTCImage directly from PIL.Image
+- [ ] export ASTCImage directly to PIL.Image
+- [ ] SVE support for arm
+- [x] tests
+- [ ] docs page

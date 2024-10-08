@@ -90,10 +90,6 @@ configs = {
 }
 
 
-with open("README.md", "r") as fh:
-    long_description = fh.read()
-
-
 class CustomBuildExt(build_ext):
     def build_extensions(self):
         extra_compile_args: List[str] = []
@@ -227,7 +223,6 @@ class bdist_wheel_abi3(bdist_wheel):
 
 setup(
     name="astc_encoder_py",
-    description="a python wrapper for astc-encoder",
     packages=["astc_encoder"],
     package_data={
         "astc_encoder": ["__init__.py", "__init__.pyi", "py.typed", "enum.py"]
