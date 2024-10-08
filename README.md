@@ -1,6 +1,6 @@
 # astc-encoder-py
 
-astc-encoder-py is a  Python wrapper around [astc-encoder](https://github.com/ARM-software/astc-encoder).
+``astc-encoder-py`` is a  Python binding of [astc-encoder](https://github.com/ARM-software/astc-encoder).
 It can compress images into astc textures and decompress astc textures into images.
 
 **Requires Python 3.7+**
