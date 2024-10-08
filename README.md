@@ -67,7 +67,6 @@ image_dec = ASTCImage(ASTCType.U8, *img.size)
 
 # decompress the data into the image
 # the result has always 4 channels
-# DON'T RE-USE THE IMAGE OBJECT FROM COMPRESSION, IT MIGHT SEGFAULT
 context.decompress(comp, image_dec, swizzle)
 
 # load the decompressed image into PIL
