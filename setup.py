@@ -35,6 +35,22 @@ ASTC_ENCODER_SOURCES = [
     "astcenc_weight_quant_xfer_tables.cpp",
 ]
 
+ASTC_ENCODER_HEADERS = [
+    # sdist on github runners fails to include these via MANIFEST.in
+    "astcenc_diagnostic_trace.h",
+    "astcenc_internal_entry.h",
+    "astcenc_internal.h",
+    "astcenc_mathlib.h",
+    "astcenc_vecmathlib_avx2_8.h",
+    "astcenc_vecmathlib_common_4.h",
+    "astcenc_vecmathlib_neon_4.h",
+    "astcenc_vecmathlib_none_4.h",
+    "astcenc_vecmathlib_sse_4.h",
+    "astcenc_vecmathlib_sve8.h",
+    "astcenc_vecmathlib.h",
+    "astcenc.h",
+]
+
 
 NON_WIN_LINKER_OPTIONS = ["-pthread"]
 
@@ -182,6 +198,12 @@ class ASTCExtension(Extension):
                 *[
                     f"src/astc-encoder/Source/{source}"
                     for source in ASTC_ENCODER_SOURCES
+                ],
+            ],
+            depends=[
+                *[
+                    f"src/astc-encoder/Source/{header}"
+                    for header in ASTC_ENCODER_HEADERS
                 ],
             ],
             include_dirs=["src/astc-encoder/Source"],

@@ -20,6 +20,9 @@ jobs:
 
       - name: Build sdist
         run: pipx run build --sdist
+      
+      - name: Install sdist
+        run: pip install dist/*.tar.gz
 
       - uses: actions/upload-artifact@v3
         with:
