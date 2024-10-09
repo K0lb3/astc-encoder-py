@@ -442,6 +442,20 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
 
     // prepare image
     uint8_t *image_data = (uint8_t *)PyBytes_AsString(py_image->data);
+    if (image_data == nullptr)
+    {
+        // PyBytes_AsString returns NULL if the object can't be interpreted as bytes
+        // and sets an exception
+        return NULL;
+    }
+
+    Py_ssize_t given_size = PyBytes_Size(py_image->data);
+    Py_ssize_t expected_size = image->dim_x * image->dim_y * image->dim_z * 4;
+    if (given_size != expected_size)
+    {
+        return PyErr_Format(ASTCError, "Image data size does not match the image dimensions. Expected %d, got %d.", expected_size, given_size);
+    }
+
     image->data = reinterpret_cast<void **>(&image_data);
 
     // Space needed for 16 bytes of output per compressed block
@@ -449,7 +463,9 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
     unsigned int block_count_y = (image->dim_y + config->block_y - 1) / config->block_y;
     unsigned int block_count_z = (image->dim_z + config->block_z - 1) / config->block_z;
     size_t comp_len = block_count_x * block_count_y * block_count_z * 16;
-    uint8_t *comp_data = new uint8_t[comp_len];
+
+    PyObject *py_comp_data = PyBytes_FromStringAndSize(nullptr, comp_len);
+    uint8_t *comp_data = (uint8_t *)PyBytes_AsString(py_comp_data);
 
     // run the compressor
     astcenc_error status;
@@ -493,26 +509,20 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
 
     if (status != ASTCENC_SUCCESS)
     {
-        delete[] comp_data;
-        image->data = nullptr;
+        Py_DecRef(py_comp_data);
         PyErr_SetString(ASTCError, astcenc_get_error_string(status));
-        return NULL;
+        py_comp_data = NULL;
     }
 
     status = astcenc_compress_reset(self->context);
     if (status != ASTCENC_SUCCESS)
     {
-        delete[] comp_data;
-        image->data = nullptr;
+        Py_DecRef(py_comp_data);
         PyErr_SetString(ASTCError, astcenc_get_error_string(status));
-        return NULL;
+        py_comp_data = NULL;
     }
 
-    // create a python bytes object from the compressed data
-    PyObject *py_comp_data = PyBytes_FromStringAndSize((char *)comp_data, comp_len);
-
     // cleanup
-    delete[] comp_data;
     image->data = nullptr;
 
     return py_comp_data;
@@ -532,9 +542,21 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
         return NULL;
     }
 
-    // prepare image
     astcenc_image *image = &py_image->image;
+    astcenc_config *config = &self->config->config;
 
+    // check if comp data is long enough
+    // Space needed for 16 bytes of output per compressed block
+    unsigned int block_count_x = (image->dim_x + config->block_x - 1) / config->block_x;
+    unsigned int block_count_y = (image->dim_y + config->block_y - 1) / config->block_y;
+    unsigned int block_count_z = (image->dim_z + config->block_z - 1) / config->block_z;
+    Py_ssize_t expected_comp_len = block_count_x * block_count_y * block_count_z * 16;
+    if (comp_len != expected_comp_len)
+    {
+        return PyErr_Format(ASTCError, "Compressed data size does not match the image dimensions. Expected at %d, got %d.", expected_comp_len, comp_len);
+    }
+
+    // prepare image
     Py_ssize_t image_len = image->dim_x * image->dim_y * image->dim_z * 4;
     if (image->data_type == ASTCENC_TYPE_F16)
     {
@@ -544,7 +566,9 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
     {
         image_len *= 4;
     }
-    uint8_t *image_data = new uint8_t[image_len];
+
+    PyObject *py_image_data = PyBytes_FromStringAndSize(nullptr, image_len);
+    uint8_t *image_data = (uint8_t *)PyBytes_AsString(py_image_data);
     image->data = reinterpret_cast<void **>(&image_data);
 
     // run the decompressor
@@ -589,30 +613,26 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
 
     if (status != ASTCENC_SUCCESS)
     {
-        delete[] image_data;
-        image->data = nullptr;
+        Py_DecRef(py_image_data);
+        py_image_data = NULL;
         PyErr_SetString(ASTCError, astcenc_get_error_string(status));
-        return NULL;
     }
 
     status = astcenc_decompress_reset(self->context);
     if (status != ASTCENC_SUCCESS)
     {
-        delete[] image_data;
-        image->data = nullptr;
+        Py_DecRef(py_image_data);
+        py_image_data = NULL;
         PyErr_SetString(ASTCError, astcenc_get_error_string(status));
-        return NULL;
     }
 
     // create a python bytes object from the decompressed data
-    PyObject *py_image_data = PyBytes_FromStringAndSize((char *)image_data, image_len);
     Py_IncRef(py_image_data);
     Py_DecRef(py_image->data);
     py_image->data = py_image_data;
 
     // cleanup
     image->data = nullptr;
-    delete[] image_data;
 
     // ref count gets decreased by one when the function returns
     // so we need to increase it here to keep the object alive
