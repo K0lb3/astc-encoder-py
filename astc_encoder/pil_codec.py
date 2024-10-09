@@ -3,7 +3,7 @@
 Importing this module provides an ASTC codec for PIL for encoding and decoding ASTC images.
 """
 
-import struct
+import ctypes
 from typing import Any, List
 
 from PIL import Image, ImageFile
@@ -56,12 +56,17 @@ class ASTCEncoder(ImageFile.PyEncoder):  # noqa: D101
         else:
             raise ValueError(f"Unsupported mode: {mode}")
 
-        rgba_struct = struct.Struct("4B")
-        data = b"".join(
-            rgba_struct.pack(*self.im.getpixel((x, y)))  # type: ignore
-            for y in range(self.state.ysize)
-            for x in range(self.state.xsize)
-        )
+        # PIL always uses RGBA in memory, so we just grab the raw data
+        # without going through the inefficient getpixel method
+        # rgba_struct = struct.Struct("4B")
+        # data = b"".join(
+        #     rgba_struct.pack(*im.getpixel((x, y)))  # type: ignore
+        #     for y in range(self.state.ysize)
+        #     for x in range(self.state.xsize)
+        # )
+        c_ptr = ctypes.POINTER(ctypes.c_uint8).from_address(self.im.unsafe_ptrs[1][1])
+        data = ctypes.string_at(c_ptr, self.state.xsize * self.state.ysize * 4)
+
         astc_img = ASTCImage(
             ASTCType.U8,
             self.state.xsize,
@@ -69,7 +74,7 @@ class ASTCEncoder(ImageFile.PyEncoder):  # noqa: D101
             data=data,
         )
         comp = self.context.compress(astc_img, swizzle)
-        return len(comp), 0, comp
+        return len(comp), 1, comp
 
 
 Image.register_encoder("astc", ASTCEncoder)

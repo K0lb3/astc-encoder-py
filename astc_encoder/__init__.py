@@ -6,7 +6,7 @@ Currently this is only supported on x86_64, all others use an encoder with no SI
 The exception is aarch64, which uses the neon encoder by default.
 """
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 
 from .enum import (
     ASTCConfigFlags as ASTCConfigFlags,

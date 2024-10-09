@@ -1,28 +1,41 @@
 # astc-encoder-py
 
+[![Win/Mac/Linux](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-informational)]()
+[![MIT](https://img.shields.io/github/license/K0lb3/astc-encoder-py)](https://github.com/K0lb3/astc-encoder-py/blob/master/LICENSE)
+[![Docs](https://github.com/K0lb3/astc-encoder-py/actions/workflows/doc.yml/badge.svg?branch=main)](k0lb3.github.io/astc-encoder-py/)
+
+
 ``astc-encoder-py`` is a  Python binding of [astc-encoder](https://github.com/ARM-software/astc-encoder).
 It can compress images into astc textures and decompress astc textures into images.
 
-**Requires Python 3.7+**
+## Installation
 
-## docs
+**Python 3.7+**
 
-TODO, check the [pyi](./astc_encoder/__init__.pyi) for now.
+```bash
+pip install astc-encoder-py
+```
 
-## examples
+There are prebuild wheels for all platforms covered by cibuildwheel.
 
-### loading astc data as PIL.Image
+
+## Examples
+
+### simple astc via PIL.Image
 
 ```py
 # import following once to register the codec
 import astc_encoder.pil_codec
 
 # pass the relevant data to the decoder via the decoder args as below
-profile: int = 1
+profile: int = 1 # LDR_SRGB = 0, LDR = 1, HDR_RGB_LDR_A = 2, HDR = 3
 block_width: int = 4
 block_height: int = 4
 # the target mode should always be RGBA, even for RGB, as the decompression always returns RGBA
 Image.frombytes("RGBA", (512, 512), comp, "astc", (profile, block_width, block_height)).show()
+# compress Image to astc, the Image.mode has to be RGB or RGBA
+quality: float = 100 # 0-100, medium is 60
+Image.tobytes("astc", (profile, quality, block_width, block_height))
 ```
 
 ### compressing and decompressing using astc_encoder
