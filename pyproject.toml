@@ -54,7 +54,7 @@ build = "cp37-win_amd64 cp37-win32 cp39-win_arm64 pp3*"
 
 # tests
 [project.optional-dependencies]
-tests = ["pytest >= 8.3.3", "pillow >=10.4.0", "imagehash >=4.3.1"]
+tests = ["pytest >= 8.3.3", "pillow >=10.4.0", "imagehash >=4.3.1", "psutil >= 6.0.0"]
 
 [tool.ruff]
 include = ["pyproject.toml", "astc_encoder/*.py", "astc_encoder/*.pyi", "tests/*.py"]
