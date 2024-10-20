@@ -1,11 +1,13 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "structmember.h"
-#include "astcenc.h"
 #include <future>
 #include <thread>
 #include <vector>
 #include <cctype>
+
+#include "astcenc.h"
+#include "astcenc_error_metrics.hpp"
 
 PyObject *ASTCError;
 
@@ -162,10 +164,10 @@ static Py_ssize_t calc_ASTCImage_data_size(ASTCImageT *image)
 }
 
 static PyMemberDef ASTCImage_members[] = {
-    {"dim_x", T_UINT, offsetof(ASTCImageT, image.dim_x), Py_READONLY, "The X dimension of the image, in texels."},
-    {"dim_y", T_UINT, offsetof(ASTCImageT, image.dim_y), Py_READONLY, "The Y dimension of the image, in texels."},
-    {"dim_z", T_UINT, offsetof(ASTCImageT, image.dim_z), Py_READONLY, "The Z dimension of the image, in texels."},
-    {"data_type", T_UINT, offsetof(ASTCImageT, image.data_type), Py_READONLY, "The data type per component."},
+    {"dim_x", T_UINT, offsetof(ASTCImageT, image.dim_x), READONLY, "The X dimension of the image, in texels."},
+    {"dim_y", T_UINT, offsetof(ASTCImageT, image.dim_y), READONLY, "The Y dimension of the image, in texels."},
+    {"dim_z", T_UINT, offsetof(ASTCImageT, image.dim_z), READONLY, "The Z dimension of the image, in texels."},
+    {"data_type", T_UINT, offsetof(ASTCImageT, image.data_type), READONLY, "The data type per component."},
     {NULL} /* Sentinel */
 };
 
@@ -716,18 +718,82 @@ static PyType_Spec ASTContext_Spec = {
  *
  ************************************************
  */
+static PyObject *compute_error_metrics_py(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    const char *kwlist[] = {
+        "compute_hdr_metrics",    // Compute HDR metrics.
+        "compute_normal_metrics", // Compute normal map metrics.
+        "input_components",       // The number of components in the input images.
+        "img1",                   // The first image to compare.
+        "img2",                   // The second image to compare.
+        "fstop_lo",               // The low end of the f-stop range.
+        "fstop_hi",               // The high end of the f-stop range.
+        NULL};
+
+    // python's p(redicate) for bool casts to int
+    int compute_hdr_metrics;
+    int compute_normal_metrics;
+    int input_components;
+    ASTCImageT *py_img1 = nullptr;
+    ASTCImageT *py_img2 = nullptr;
+    int fstop_lo;
+    int fstop_hi;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ppiO!O!ii", (char **)kwlist, &compute_hdr_metrics, &compute_normal_metrics, &input_components, ASTCImage_Object, &py_img1, ASTCImage_Object, &py_img2, &fstop_lo, &fstop_hi))
+    {
+        return NULL;
+    }
+
+    if (input_components < 0 || input_components > 4)
+    {
+        PyErr_SetString(ASTCError, "Invalid input components (0-4).");
+        return NULL;
+    }
+
+    astcenc_image *image1 = &py_img1->image;
+    uint8_t *image1_data = (uint8_t *)PyBytes_AsString(py_img1->data);
+    image1->data = reinterpret_cast<void **>(&image1_data);
+
+    astcenc_image *image2 = &py_img2->image;
+    uint8_t *image2_data = (uint8_t *)PyBytes_AsString(py_img2->data);
+    image2->data = reinterpret_cast<void **>(&image2_data);
+
+    astcenc_error_metrics metrics = compute_error_metrics(
+        compute_hdr_metrics,
+        compute_normal_metrics,
+        input_components,
+        image1,
+        image2,
+        fstop_lo,
+        fstop_hi);
+
+    return Py_BuildValue("{s:d,s:d,s:d,s:d,s:d,s:d,s:d,s:d}",
+                         "psnr", metrics.psnr,
+                         "psnr_rgb", metrics.psnr_rgb,
+                         "psnr_alpha", metrics.psnr_alpha,
+                         "peak_rgb", metrics.peak_rgb,
+                         "mspnr_rgb", metrics.mspnr_rgb,
+                         "log_rmse_rgb", metrics.log_rmse_rgb,
+                         "mean_angular_errorsum", metrics.mean_angular_errorsum,
+                         "worst_angular_errorsum", metrics.worst_angular_errorsum);
+}
+
+static PyMethodDef astc_encoder_functions[] = {
+    {"compute_error_metrics", (PyCFunction)compute_error_metrics_py, METH_VARARGS | METH_KEYWORDS, "compute error metrics"},
+    {NULL, NULL, 0, NULL} /* Sentinel */
+};
 
 // A struct contains the definition of a module
 static PyModuleDef astc_encoder_module = {
     PyModuleDef_HEAD_INIT,
     MODULE_NAME, // Module name
     "a python wrapper for astc-encoder",
-    -1,   // Optional size of the module state memory
-    NULL, // Optional table of module-level functions
-    NULL, // Optional slot definitions
-    NULL, // Optional traversal function
-    NULL, // Optional clear function
-    NULL  // Optional module deallocation function
+    -1,                     // Optional size of the module state memory
+    astc_encoder_functions, // Optional table of module-level functions
+    NULL,                   // Optional slot definitions
+    NULL,                   // Optional traversal function
+    NULL,                   // Optional clear function
+    NULL                    // Optional module deallocation function
 };
 
 int add_object(PyObject *module, const char *name, PyObject *object)

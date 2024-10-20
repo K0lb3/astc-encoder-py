@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import Optional, Union
+
+from typing import Literal, Optional, Union
 
 from .enum import (
     ASTCConfigFlags,
@@ -250,9 +251,56 @@ class ASTCContext:
 
     def __init__(self, config: ASTCConfig, threads: int = 1) -> None: ...
     def compress(self, image: ASTCImage, swizzle: ASTCSwizzle) -> bytes: ...
-    def decompress(self, data: bytes, image: ASTCImage, swizzle: ASTCSwizzle) -> ASTCImage: ...
+    def decompress(
+        self, data: bytes, image: ASTCImage, swizzle: ASTCSwizzle
+    ) -> ASTCImage: ...
 
 class ASTCError(Exception):
+    pass
+
+def compute_error_metrics(
+    compute_hdr_metrics: bool,
+    compute_hdr_rg_metrics: bool,
+    input_components: Literal[0, 1, 2, 3, 4],
+    img1: ASTCImage,
+    img2: ASTCImage,
+    fstop_lo: int,
+    fstop_hi: int,
+) -> dict:
+    """Compute error metrics comparing two images.
+
+    Parameters
+    ----------
+    compute_hdr_metrics : bool
+        True if HDR metrics should be computed.
+    compute_normal_metrics: bool
+        True if normal map metrics should be computed.
+    input_components : Literal[0, 1, 2, 3, 4]
+        The number of color components in the input images.
+    img1: ASTCImage
+        The original image.
+    img2: ASTCImage
+        The compressed image.
+    fstop_lo: int
+        The low exposure fstop (HDR only).
+    fstop_hi: int
+        The high exposure fstop (HDR only).
+
+    Returns
+    -------
+    dict
+        A dictionary with the following keys:
+        - "psnr": The peak signal-to-noise ratio.
+        - "psnr_rgb": The peak signal-to-noise ratio for RGB channels.
+        - "psnr_alpha": The peak signal-to-noise ratio for the alpha channel.
+        - "peak_rgb": The peak value for RGB channels.
+        - "mspnr_rgb": The mean signal-to-noise ratio for RGB channels. (hdr metric)
+        - "log_rgmse_rgb": The log root mean square error for RGB channels. (hdr metric)
+        - "mean_angular_errorsum": The mean angular error. (normal map metric)
+        - "worst_angular_errorsum": The worst angular error. (normal map metric)
+
+        If a value is -1 it means that this metric was not computed.
+    """
     pass
 
 __all__ = (
@@ -261,4 +309,5 @@ __all__ = (
     "ASTCImage",
     "ASTCSwizzle",
     "ASTCError",
+    "compute_error_metrics",
 )

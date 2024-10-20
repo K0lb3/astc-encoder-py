@@ -195,12 +195,14 @@ class ASTCExtension(Extension):
             f"astc_encoder.{module_name}",
             sources=[
                 "src/pybind.cpp",
+                "src/astcenc_error_metrics.cpp",
                 *[
                     f"src/astc-encoder/Source/{source}"
                     for source in ASTC_ENCODER_SOURCES
                 ],
             ],
             depends=[
+                "src/astcenc_error_metrics.hpp",
                 *[
                     f"src/astc-encoder/Source/{header}"
                     for header in ASTC_ENCODER_HEADERS

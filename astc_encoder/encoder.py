@@ -33,4 +33,5 @@ __all__ = (
     "ASTCImage",
     "ASTCSwizzle",
     "ASTCError",
+    "compute_error_metrics",
 )

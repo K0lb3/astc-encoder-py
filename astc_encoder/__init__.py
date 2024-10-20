@@ -22,4 +22,5 @@ from .encoder import (
     ASTCImage as ASTCImage,
     ASTCSwizzle as ASTCSwizzle,
     ASTCError as ASTCError,
+    compute_error_metrics as compute_error_metrics,
 )
