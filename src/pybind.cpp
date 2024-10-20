@@ -137,12 +137,59 @@ typedef struct ASTCImage
     PyObject *data;
 } ASTCImageT;
 
+static Py_ssize_t calc_ASTCImage_data_size(ASTCImageT *image)
+{
+    Py_ssize_t factor;
+    astcenc_type data_type = image->image.data_type;
+    if (data_type == ASTCENC_TYPE_U8)
+    {
+        factor = 4 * 1;
+    }
+    else if (data_type == ASTCENC_TYPE_F16)
+    {
+        factor = 4 * 2;
+    }
+    else if (data_type == ASTCENC_TYPE_F32)
+    {
+        factor = 4 * 4;
+    }
+    else
+    {
+        PyErr_SetString(ASTCError, "Invalid data type.");
+        return -1;
+    }
+    return image->image.dim_x * image->image.dim_y * image->image.dim_z * factor;
+}
+
 static PyMemberDef ASTCImage_members[] = {
-    {"dim_x", T_UINT, offsetof(ASTCImageT, image.dim_x), 0, "The X dimension of the image, in texels."},
-    {"dim_y", T_UINT, offsetof(ASTCImageT, image.dim_y), 0, "The Y dimension of the image, in texels."},
-    {"dim_z", T_UINT, offsetof(ASTCImageT, image.dim_z), 0, "The Z dimension of the image, in texels."},
-    {"data_type", T_UINT, offsetof(ASTCImageT, image.data_type), 0, "The data type per component."},
-    {"data", T_OBJECT_EX, offsetof(ASTCImageT, data), 0, "The array of 2D slices, of length @c dim_z."},
+    {"dim_x", T_UINT, offsetof(ASTCImageT, image.dim_x), Py_READONLY, "The X dimension of the image, in texels."},
+    {"dim_y", T_UINT, offsetof(ASTCImageT, image.dim_y), Py_READONLY, "The Y dimension of the image, in texels."},
+    {"dim_z", T_UINT, offsetof(ASTCImageT, image.dim_z), Py_READONLY, "The Z dimension of the image, in texels."},
+    {"data_type", T_UINT, offsetof(ASTCImageT, image.data_type), Py_READONLY, "The data type per component."},
+    {NULL} /* Sentinel */
+};
+
+static PyObject *ASTCImage_get_data(ASTCImageT *self, void *closure)
+{
+    Py_IncRef(self->data);
+    return self->data;
+}
+
+static int ASTCImage_set_data(ASTCImageT *self, PyObject *value, void *closure)
+{
+    if (value != Py_None && (!PyBytes_Check(value) || PyBytes_Size(value) != calc_ASTCImage_data_size(self)))
+    {
+        PyErr_SetString(ASTCError, "Image data size does not match the image dimensions with the given data type!");
+        return -1;
+    }
+    Py_DecRef(self->data);
+    Py_IncRef(value);
+    self->data = value;
+    return 0;
+}
+
+static PyGetSetDef ASTCImage_getseters[] = {
+    {"data", (getter)ASTCImage_get_data, (setter)ASTCImage_set_data, "The array of 2D slices, of length dim_x * dim_y * dim_z * size_of(data_type) * 4.", NULL},
     {NULL} /* Sentinel */
 };
 
@@ -165,13 +212,25 @@ static int ASTCImage_init(ASTCImageT *self, PyObject *args, PyObject *kwargs)
 
     uint8_t data_type;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "BII|IO", (char **)kwlist, &data_type, &self->image.dim_x, &self->image.dim_y, &self->image.dim_z, &self->data))
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "BII|IO!", (char **)kwlist, &data_type, &self->image.dim_x, &self->image.dim_y, &self->image.dim_z, &PyBytes_Type, &self->data))
     {
         return -1;
     }
 
     self->image.data_type = (astcenc_type)data_type;
     Py_IncRef(self->data);
+
+    if (data_type != ASTCENC_TYPE_U8 && data_type != ASTCENC_TYPE_F16 && data_type != ASTCENC_TYPE_F32)
+    {
+        PyErr_SetString(ASTCError, "Invalid data type.");
+        return -1;
+    }
+
+    if (self->data != Py_None && PyBytes_Size(self->data) != calc_ASTCImage_data_size(self))
+    {
+        PyErr_SetString(ASTCError, "Image data size does not match the image dimensions with the given data type!");
+        return -1;
+    }
 
     return 0;
 }
@@ -191,6 +250,7 @@ PyType_Slot ASTCImage_slots[] = {
     {Py_tp_dealloc, (void *)ASTCImage_dealloc},
     {Py_tp_doc, (void *)"ASTC Image"},
     {Py_tp_members, ASTCImage_members},
+    {Py_tp_getset, ASTCImage_getseters},
     {Py_tp_init, (void *)ASTCImage_init},
     {Py_tp_new, (void *)PyType_GenericNew},
     {Py_tp_repr, (void *)ASTCImage_repr},
@@ -448,14 +508,6 @@ PyObject *ASTCContext_method_comprocess(ASTContextT *self, PyObject *args, PyObj
         // and sets an exception
         return NULL;
     }
-
-    Py_ssize_t given_size = PyBytes_Size(py_image->data);
-    Py_ssize_t expected_size = image->dim_x * image->dim_y * image->dim_z * 4;
-    if (given_size != expected_size)
-    {
-        return PyErr_Format(ASTCError, "Image data size does not match the image dimensions. Expected %d, got %d.", expected_size, given_size);
-    }
-
     image->data = reinterpret_cast<void **>(&image_data);
 
     // Space needed for 16 bytes of output per compressed block
@@ -557,15 +609,7 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
     }
 
     // prepare image
-    Py_ssize_t image_len = image->dim_x * image->dim_y * image->dim_z * 4;
-    if (image->data_type == ASTCENC_TYPE_F16)
-    {
-        image_len *= 2;
-    }
-    else if (image->data_type == ASTCENC_TYPE_F32)
-    {
-        image_len *= 4;
-    }
+    Py_ssize_t image_len = calc_ASTCImage_data_size(py_image);
 
     PyObject *py_image_data = PyBytes_FromStringAndSize(nullptr, image_len);
     uint8_t *image_data = (uint8_t *)PyBytes_AsString(py_image_data);
