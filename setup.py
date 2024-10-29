@@ -122,10 +122,17 @@ class CustomBuildExt(build_ext):
                 "/EHsc",
                 "/W4",
                 "/fp:precise",
+                # https://github.com/mos9527/sssekai_blender_io/issues/11
+                "/D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR",
             ]
             # not in the astc-encoder CMakeLists.txt
-            # evem tho it should improve performance
+            # even tho it should improve performance
             extra_link_args = ["/LTCG:incremental"]
+            # Enable debug build if specified
+            if os.environ.get("DEBUG", False):
+                extra_compile_args.append("/Od")
+                extra_compile_args.append("/Zi")
+                extra_link_args.append("/debug")
             msvc = True
         else:
             extra_compile_args = [
