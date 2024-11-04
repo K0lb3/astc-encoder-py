@@ -107,6 +107,8 @@ configs = {
 
 
 class CustomBuildExt(build_ext):
+    ENV_DEBUG_INFO = "DEBUG_INFO"
+
     def build_extensions(self):
         extra_compile_args: List[str] = []
         extra_link_args: List[str] = []
@@ -124,8 +126,13 @@ class CustomBuildExt(build_ext):
                 "/fp:precise",
             ]
             # not in the astc-encoder CMakeLists.txt
-            # evem tho it should improve performance
+            # even tho it should improve performance
             extra_link_args = ["/LTCG:incremental"]
+            # Generate debug info if specified (MSVC)
+            if os.environ.get(self.ENV_DEBUG_INFO, False):
+                extra_compile_args.append("/Od")
+                extra_compile_args.append("/Zi")
+                extra_link_args.append("/debug")
             msvc = True
         else:
             extra_compile_args = [
@@ -135,6 +142,11 @@ class CustomBuildExt(build_ext):
                 "-ffp-contract=fast",
             ]
             extra_link_args = ["-flto"]
+
+            # Generate debug info if specified (GCC/Clang/Mingw/etc)
+            if os.environ.get(self.ENV_DEBUG_INFO, False):
+                extra_compile_args.append("-O0")
+                extra_compile_args.append("-ggdb")
 
             if not cibuildwheel:
                 # do some native optimizations for the current machine
