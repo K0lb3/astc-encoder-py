@@ -124,8 +124,6 @@ class CustomBuildExt(build_ext):
                 "/EHsc",
                 "/W4",
                 "/fp:precise",
-                # https://github.com/mos9527/sssekai_blender_io/issues/11
-                "/D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR",
             ]
             # not in the astc-encoder CMakeLists.txt
             # even tho it should improve performance
