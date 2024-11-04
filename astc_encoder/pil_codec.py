@@ -3,8 +3,8 @@
 Importing this module provides an ASTC codec for PIL for encoding and decoding ASTC images.
 """
 
-import ctypes
-from typing import Any, List
+import struct
+from typing import Any, List, Union
 
 from PIL import Image, ImageFile
 
@@ -35,9 +35,9 @@ class ASTCEncoder(ImageFile.PyEncoder):  # noqa: D101
         block_depth: int = args[4] if len(args) > 4 else 1
 
         assert block_depth == 1, "Cannot handle 3D textures"
-        profile = ASTCProfile(profile)
+
         config = ASTCConfig(
-            ASTCProfile.LDR_SRGB,
+            ASTCProfile(profile),
             block_width,
             block_height,
             block_depth,
@@ -49,23 +49,22 @@ class ASTCEncoder(ImageFile.PyEncoder):  # noqa: D101
         assert self.im is not None, "No image set"  # type: ignore
 
         mode: str = self.mode
+        pack_struct: struct.Struct
         if mode == "RGBA":
             swizzle = ASTCSwizzle.from_str("rgba")
+            pack_struct = struct.Struct("4B")
         elif mode == "RGB":
             swizzle = ASTCSwizzle.from_str("rgb1")
+            pack_struct = struct.Struct("3Bx")
         else:
             raise ValueError(f"Unsupported mode: {mode}")
 
-        # PIL always uses RGBA in memory, so we just grab the raw data
-        # without going through the inefficient getpixel method
-        # rgba_struct = struct.Struct("4B")
-        # data = b"".join(
-        #     rgba_struct.pack(*im.getpixel((x, y)))  # type: ignore
-        #     for y in range(self.state.ysize)
-        #     for x in range(self.state.xsize)
-        # )
-        c_ptr = ctypes.POINTER(ctypes.c_uint8).from_address(self.im.unsafe_ptrs[1][1])
-        data = ctypes.string_at(c_ptr, self.state.xsize * self.state.ysize * 4)
+        pa = self.im.pixel_access()
+        data = b"".join(
+            pack_struct.pack(*pa[x, y])  # type: ignore
+            for y in range(self.state.ysize)
+            for x in range(self.state.xsize)
+        )
 
         astc_img = ASTCImage(
             ASTCType.U8,
@@ -101,7 +100,9 @@ class ASTCDecoder(ImageFile.PyDecoder):  # noqa: D101
         )
         self.context = ASTCContext(config)
 
-    def decode(self, buffer: bytes | Image.SupportsArrayInterface) -> tuple[int, int]:  # noqa: D102
+    def decode(
+        self, buffer: Union[bytes, Image.SupportsArrayInterface]
+    ) -> tuple[int, int]:  # noqa: D102
         assert self.state.xoff == 0 and self.state.yoff == 0, "Cannot handle offsets"
 
         config = self.context.config
@@ -134,6 +135,7 @@ class ASTCDecoder(ImageFile.PyDecoder):  # noqa: D101
         elif mode == "RGB":
             swizzle = ASTCSwizzle.from_str("rgb1")
         else:
+            # TODO: LA, L
             raise ValueError(f"Unsupported mode: {mode}")
 
         self.context.decompress(buffer, astc_img, swizzle)
