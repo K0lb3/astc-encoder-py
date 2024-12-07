@@ -1,9 +1,10 @@
-import os
-from typing import Tuple
 import gc
-import psutil
+import os
+import sys
+from typing import Tuple
 
 import imagehash
+import psutil
 from PIL import Image
 
 import astc_encoder
@@ -145,6 +146,8 @@ def test_refcount_cleanup():
         # a leak in C/C++ would most likely not align with this
         assert (current_memory - initial_memory) % 4096 == 0
 
+    total_obj_count = len(gc.get_objects())
+
     # create and destroy all object types
     astc_encoder.ASTCSwizzle()
     assert_memory_cleaned()
@@ -169,8 +172,10 @@ def test_refcount_cleanup():
     # do a full round of compression/decompression
     def full_run():
         swizzle = astc_encoder.ASTCSwizzle()
+        astc_image_data = b"\00" * 64
+        astc_image_data_refs = sys.getrefcount(astc_image_data)
         astc_image = astc_encoder.ASTCImage(
-            astc_encoder.ASTCType.U8, 4, 4, data=b"\00" * 64
+            astc_encoder.ASTCType.U8, 4, 4, 1, astc_image_data
         )
         config = astc_encoder.ASTCConfig(astc_encoder.ASTCProfile.LDR_SRGB, 4, 4)
         context = astc_encoder.ASTCContext(config)
@@ -178,8 +183,17 @@ def test_refcount_cleanup():
         astc_image_new = astc_encoder.ASTCImage(astc_encoder.ASTCType.U8, 4, 4)
         decomp = context.decompress(comp, astc_image_new, swizzle)
 
+        assert sys.getrefcount(astc_image) == 2
+        assert sys.getrefcount(astc_image.data) == astc_image_data_refs + 2
+        del astc_image
+        assert sys.getrefcount(astc_image_data) == astc_image_data_refs
+
+        assert sys.getrefcount(astc_image_new) == 3  # inp, astc_image_new, decomp
+        assert sys.getrefcount(astc_image_new.data) == 3
+
     full_run()
     assert_memory_cleaned()
+    assert total_obj_count >= len(gc.get_objects())
 
 
 if __name__ == "__main__":
