@@ -47,21 +47,27 @@ build = "cp37-* pp3*"
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
 build = "cp37-macosx_x86_64 cp38-macosx_arm64 pp3*"
-before-build = "pip install delocate"
-repair-wheel-command = "delocate-wheel -w {dest_dir} -v {wheel}"
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64", "x86", "ARM64"]
 build = "cp37-win_amd64 cp37-win32 cp39-win_arm64 pp3*"
-before-build = "pip install delvewheel"
-repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
 
 # tests
 [project.optional-dependencies]
-tests = ["pytest >= 8.3.3", "pillow >=10.4.0", "imagehash >=4.3.1", "psutil >= 6.0.0"]
+tests = [
+    "pytest >= 8.3.3",
+    "pillow >=10.4.0",
+    "imagehash >=4.3.1",
+    "psutil >= 6.0.0",
+]
 
 [tool.ruff]
-include = ["pyproject.toml", "astc_encoder/*.py", "astc_encoder/*.pyi", "tests/*.py"]
+include = [
+    "pyproject.toml",
+    "astc_encoder/*.py",
+    "astc_encoder/*.pyi",
+    "tests/*.py",
+]
 
 [tool.ruff.lint]
 select = ["D"]
