@@ -673,7 +673,7 @@ PyObject *ASTCContext_method_decompress(ASTContextT *self, PyObject *args, PyObj
     }
 
     // create a python bytes object from the decompressed data
-    Py_IncRef(py_image_data);
+    // Py_IncRef(py_image_data); // ref count is already increased by PyBytes_FromStringAndSize
     Py_DecRef(py_image->data);
     py_image->data = py_image_data;
 
