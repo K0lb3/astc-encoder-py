@@ -53,6 +53,7 @@ ASTC_ENCODER_HEADERS = [
 
 
 NON_WIN_LINKER_OPTIONS = ["-pthread"]
+CIBUILDWHEEL = os.environ.get("CIBUILDWHEEL", False)
 
 
 @dataclass
@@ -69,6 +70,7 @@ class BuildConfig:
 
 
 configs = {
+    "none": BuildConfig(),
     "neon": BuildConfig(ASTCENC_NEON=1),
     "sve128": BuildConfig(
         ASTCENC_NEON=1,
@@ -109,12 +111,47 @@ configs = {
 class CustomBuildExt(build_ext):
     ENV_DEBUG_INFO = "DEBUG_INFO"
 
+    def finalize_options(self):
+        # initial finalize_options to get the plat_name
+        build_ext.finalize_options(self)
+
+        # add the cpu specific extensions
+        # we have to do this here, so that the extensions get registered correctly
+        local_host = host()
+        if self.plat_name.endswith(("amd64", "x86_64")):
+            if CIBUILDWHEEL:
+                self.extensions.extend(
+                    [
+                        ASTCExtension("sse2", configs["sse2"]),
+                        ASTCExtension("sse41", configs["sse41"]),
+                        ASTCExtension("avx2", configs["avx2"]),
+                    ]
+                )
+            elif "avx2" in local_host.features:
+                self.extensions.append(ASTCExtension("avx2", configs["avx2"]))
+            elif "sse4_1" in local_host.features:
+                self.extensions.append(ASTCExtension("sse41", configs["sse41"]))
+            elif "sse2" in local_host.features:
+                self.extensions.append(ASTCExtension("sse2", configs["sse2"]))
+        elif self.plat_name.endswith(("arm64", "aarch64")):
+            # TODO: somehow detect neon, sve128, sve256
+            # atm assume neon is always available
+            self.extensions.append(ASTCExtension("neon", configs["neon"]))
+        elif self.plat_name.endswith("armv7l"):
+            # TODO: detect neon
+            pass
+
+        # hotpatch to prevent errors during re-finalizing
+        self.swig_opts = " ".join(self.swig_opts)
+        if self.undef:
+            self.undef = ",".join(self.undef)
+
+        # call the original finalize_options
+        super().finalize_options()
+
     def build_extensions(self):
         extra_compile_args: List[str] = []
         extra_link_args: List[str] = []
-
-        # check for cibuildwheel
-        cibuildwheel = os.environ.get("CIBUILDWHEEL", False)
 
         msvc: bool = False
         if self.compiler.compiler_type == "msvc":
@@ -150,7 +187,7 @@ class CustomBuildExt(build_ext):
                 extra_compile_args.append("-O0")
                 extra_compile_args.append("-ggdb")
 
-            if not cibuildwheel:
+            if not CIBUILDWHEEL:
                 # do some native optimizations for the current machine
                 # can't be used for generic builds
                 if "-arm" in self.plat_name or "-aarch64" in self.plat_name:
@@ -158,31 +195,6 @@ class CustomBuildExt(build_ext):
                 else:
                     native_arg = "-march=native"
                 extra_compile_args.append(native_arg)
-
-        local_host = host()
-
-        if self.plat_name.endswith(("amd64", "x86_64")):
-            if cibuildwheel:
-                self.extensions.extend(
-                    [
-                        ASTCExtension("sse2", configs["sse2"]),
-                        ASTCExtension("sse41", configs["sse41"]),
-                        ASTCExtension("avx2", configs["avx2"]),
-                    ]
-                )
-            elif "avx2" in local_host.features:
-                self.extensions.append(ASTCExtension("avx2", configs["avx2"]))
-            elif "sse4_1" in local_host.features:
-                self.extensions.append(ASTCExtension("sse41", configs["sse41"]))
-            elif "sse2" in local_host.features:
-                self.extensions.append(ASTCExtension("sse2", configs["sse2"]))
-        elif self.plat_name.endswith(("arm64", "aarch64")):
-            # TODO: somehow detect neon, sve128, sve256
-            # atm assume neon is always available
-            self.extensions.append(ASTCExtension("neon", configs["neon"]))
-        elif self.plat_name.endswith("armv7l"):
-            # TODO: detect neon
-            pass
 
         for ext in self.extensions:
             ext: ASTCExtension
@@ -263,6 +275,6 @@ setup(
     name="astc_encoder_py",
     packages=["astc_encoder"],
     package_data={"astc_encoder": ["*.py", "*.pyi", "py.typed"]},
-    ext_modules=[ASTCExtension("none", BuildConfig())],
+    ext_modules=[ASTCExtension("none", configs["none"])],
     cmdclass={"build_ext": CustomBuildExt, "bdist_wheel": bdist_wheel_abi3},
 )
