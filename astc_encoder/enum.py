@@ -66,10 +66,10 @@ class ASTCConfigFlags(IntFlag):
         In this mode the input swizzle should be e.g.
         - rrrg (the default ordering for ASTC normals on the command line)
         - gggr (the ordering used by BC5n)
-    
+
     USE_DECODE_UNORM8 : int = 1 << 1
         Enable compression heuristics that assume use of decode_unorm8 decode mode.
-    
+
         The decode_unorm8 decode mode rounds differently to the decode_fp16 decode mode,
         so enabling this flag during compression will allow the compressor to use
         the correct rounding when selecting encodings.
@@ -77,7 +77,7 @@ class ASTCConfigFlags(IntFlag):
         but will reduce image quality if using decode_fp16.
         Note that LDR_SRGB images will always use decode_unorm8 for the RGB channels,
         irrespective of this setting.
-    
+
     USE_APLHA_WEIGHT : int = 1 << 2
         Enable alpha weighting.
 

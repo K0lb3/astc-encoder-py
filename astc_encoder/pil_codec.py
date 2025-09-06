@@ -106,12 +106,12 @@ class ASTCDecoder(ImageFile.PyDecoder):  # noqa: D101
         assert self.state.xoff == 0 and self.state.yoff == 0, "Cannot handle offsets"
 
         config = self.context.config
-        assert (
-            self.state.xsize % config.block_x == 0
-        ), "Invalid width, must be multiple of block width"
-        assert (
-            self.state.ysize % config.block_y == 0
-        ), "Invalid height, must be multiple of block height"
+        assert self.state.xsize % config.block_x == 0, (
+            "Invalid width, must be multiple of block width"
+        )
+        assert self.state.ysize % config.block_y == 0, (
+            "Invalid height, must be multiple of block height"
+        )
 
         block_count_x = (self.state.xsize + config.block_x - 1) // config.block_x
         block_count_y = (self.state.ysize + config.block_y - 1) // config.block_y
